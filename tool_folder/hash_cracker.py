@@ -30,6 +30,15 @@ import time
 # Assume other necessary imports and function definitions remain as before
 
 def identify_hash(hash):
+    """
+    Identifies the type of hash based on its length.
+
+    Args:
+        hash (str): The hash to be identified.
+
+    Returns:
+        str: The type of hash if identified, otherwise "Unknown".
+    """
     hash_type = {
         32: 'MD5 or NTLM',
         40: 'SHA1',
@@ -60,7 +69,27 @@ def identify_hash(hash):
     else:
         print("Cracking hash...")
         return hash_type.get(len(hash), "Unknown")
+
+
 class HashCracker:
+    """
+    A class for cracking hashes using a wordlist.
+
+    Attributes:
+        wordlist_path (str): The path to the wordlist file.
+        lock (threading.Lock): A lock for thread synchronization.
+        found (bool): A flag indicating if the hash has been cracked.
+        total_words (int): The total number of words in the wordlist.
+        processed_words (int): The number of words processed so far.
+
+    Methods:
+        wordlist_length(): Returns the length of the wordlist.
+        update_progress(processed): Updates the progress of the hash cracking process.
+        crack_batch(words, hash_to_crack, hash_function): Cracks a batch of words.
+        load_and_crack(hash_to_crack, hash_function): Loads the wordlist and cracks the hash in batches.
+        crack_hash(hash_to_crack): Cracks the given hash using the wordlist.
+    """
+
     def __init__(self, wordlist_path):
         self.wordlist_path = wordlist_path
         self.lock = threading.Lock()
@@ -69,6 +98,12 @@ class HashCracker:
         self.processed_words = 0
 
     def wordlist_length(self):
+        """
+        Returns the length of the wordlist.
+
+        Returns:
+            int: The length of the wordlist.
+        """
         try:
             with open(self.wordlist_path, 'r', encoding='utf-8', errors='ignore') as wordlist:
                 return sum(1 for _ in wordlist)
@@ -77,12 +112,29 @@ class HashCracker:
             return 0
 
     def update_progress(self, processed):
+        """
+        Updates the progress of the hash cracking process.
+
+        Args:
+            processed (int): The number of words processed in the current batch.
+        """
         with self.lock:
             self.processed_words += processed
             progress = (self.processed_words / self.total_words) * 100
             print(f"\rProgress: {progress:.2f}%", end='')
 
     def crack_batch(self, words, hash_to_crack, hash_function):
+        """
+        Cracks a batch of words.
+
+        Args:
+            words (list): A list of words to be checked against the hash.
+            hash_to_crack (str): The hash to be cracked.
+            hash_function (function): The hash function to be used for hashing the words.
+
+        Returns:
+            None
+        """
         for word in words:
             if self.found:
                 return
@@ -96,6 +148,16 @@ class HashCracker:
         self.update_progress(len(words))
 
     def load_and_crack(self, hash_to_crack, hash_function):
+        """
+        Loads the wordlist and cracks the hash in batches.
+
+        Args:
+            hash_to_crack (str): The hash to be cracked.
+            hash_function (function): The hash function to be used for hashing the words.
+
+        Yields:
+            list: A batch of words from the wordlist.
+        """
         batch_size = 10000  # Adjust based on optimal testing
         try:
             with open(self.wordlist_path, 'r', encoding='utf-8', errors='ignore') as wordlist:
@@ -114,6 +176,15 @@ class HashCracker:
             return
 
     def crack_hash(self, hash_to_crack):
+        """
+        Cracks the given hash using the wordlist.
+
+        Args:
+            hash_to_crack (str): The hash to be cracked.
+
+        Returns:
+            None
+        """
         start_time = time.time() # Start time for performance measurement
         
         hash_type = identify_hash(hash_to_crack)
@@ -121,7 +192,7 @@ class HashCracker:
             print("Unknown hash type.")
             return
 
-        hash_function = {
+        hash_function = { # Select the appropriate hash function based on the hash type
             'MD5': lambda word: hashlib.md5(word.encode()).hexdigest(),
             'NTLM': lambda word: hashlib.new('md4', word.encode('utf-16le')).hexdigest(),
             'SHA1': lambda word: hashlib.sha1(word.encode()).hexdigest(),
@@ -169,18 +240,18 @@ def select_wordlist(wordlists):
 # Usage example with menu integration
 if __name__ == "__main__":
     wordlists = detect_wordlists()
-    wordlist_path = None
-    hash_to_crack = None
+    wordlist_path = None # Initialize the wordlist path
+    hash_to_crack = None # Initialize the hash to crack
 
-    while True:
+    while True: # Main menu loop
         choice = main_menu()
-        if choice == '1':
+        if choice == '1': # Select wordlist
             selected_wordlist = select_wordlist(wordlists)
             if selected_wordlist:
                 wordlist_path = os.path.join("wordlists", selected_wordlist)
                 print(f"Selected wordlist: {selected_wordlist}")
                 time.sleep(1)
-        elif choice == '2':
+        elif choice == '2': # Enter hash to crack
             if wordlist_path:
                 hash_to_crack = input("Enter the hash to crack: ").strip()
                 hash_cracker = HashCracker(wordlist_path)
