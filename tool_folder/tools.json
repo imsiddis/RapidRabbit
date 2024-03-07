@@ -1,0 +1,43 @@
+[
+    {
+        "name": "about",
+        "Category": "Information",
+        "version": "1.0",
+        "Description": "This will be the about section for the project."
+    },
+    {
+        "name": "Hash Cracker",
+        "filename": "hash_cracker.py",
+        "category": "Hash Cracking",
+        "version": "1.0",
+        "description": "This will crack a given hash using a wordlist."
+    },
+    {
+        "name": "Hash Identify",
+        "filename": "hash_identify.py",
+        "category": "Hash Cracking",
+        "version": "1.0",
+        "description": "This tool will identify a given hash."
+    },
+    {
+        "name": "Port Scanner",
+        "filename": "port_scanner.py",
+        "Category": "Network",
+        "Version": "1.0",
+        "Description": "This will scan a target to check if ports are open."
+    },
+    {
+        "name": "Profiler",
+        "filename": "test_profiler.py",
+        "Category": "Profiles",
+        "Version": "a0.1",
+        "Description": "The profiler lets you manage target profiles."
+    },
+    {
+        "name": "Test Tool",
+        "filename": "test_tool.py",
+        "category": "Test Category",
+        "version": "2.0",
+        "description": "This is a test file to check if the tool detection system works."
+    }
+]
