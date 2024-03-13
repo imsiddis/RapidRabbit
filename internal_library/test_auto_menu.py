@@ -14,7 +14,7 @@
 import os
 import json
 import subprocess
-from internal_library.asset_functions import clear_screen, beautify_title
+from internal_library.asset_functions import clear_screen, beautify_title, center_text
 
 tool_list = []
 
@@ -153,6 +153,8 @@ def main():
     if not categories:
         print("No categories found.")
         return # Exit the program if no categories are found
+    else:
+        pass
     
     
     print("Select a category:") 
@@ -177,9 +179,13 @@ def main():
         for i, tool in enumerate(category_tools, 1):
             print(f"{i}. {tool['name']}")
         
+        #######################
+        # SELECT TOOL SECTION #
+        #######################
+        
         # Prompt the user to select a tool
         tool_choice = int(input("\nEnter your choice (number) for tool: \n>> ")) - 1
-        chosen_tool = category_tools[tool_choice]
+        chosen_tool = category_tools[tool_choice] # Get the chosen tool from the list of tools
         
         # Assuming the tool's name corresponds to a script filename in the tool_folder | WARNING: This is a security risk!
         tool_script_path = os.path.join("tool_folder", chosen_tool['filename'].replace(" ", "_"))

@@ -153,7 +153,7 @@ def splash_screen(logo=True,title=True):
                                                              @@@@@@@@@@@@@@@                                
                                                                                   """
 def splash_logo_no_indent():
-    print("""
+    rapid_rabbit_logo ="""
           
                         (%%%%%%%%%%%%%%%%                               
                   .%%%%%%%%%&.     .&%%%%%%%%%                          
@@ -177,8 +177,10 @@ def splash_logo_no_indent():
                             @@@@  @@@@         @@@@@@                   
                @@@@@@@@@@@  @@@@           @@@@@@@                      
                    @@@@@@@@@@     .@@@@@@@@@@@                          
-                         @@@@@@@@@@@@@@@
-          """)
+@@@@@@@@@@@@@@@
+          """
+    return rapid_rabbit_logo
+def splash_screen_title():    
     splash_screen_title = """
 
      _______ _              ______              _     _    ______        _     _     _          _______          _  _     _       
@@ -189,6 +191,7 @@ def splash_logo_no_indent():
        |_|  |_| |_|_____)  |_|   |_\_____|  __/|_|\____|  |_|   |_\_____|____/|____/|_|  \__)     |_|\___/ \___/ \_)_| \_)_|  \__)
                                          |_|                                                                                      
     """
+    return splash_screen_title
 
 #===================================#
 # Automatic Menu Integration System #
@@ -209,6 +212,65 @@ def menu_option(option_number, option_name, style=1):
     else:
         return "No valid style was selected."
 
+#=======================#
+# Center Text Functions #
+#=======================#
+
+def center_text(text, fill_char=" "):
+    # Get terminal width
+    terminal_width = os.get_terminal_size().columns
+    
+    # Split the text into lines in case it's multiline
+    lines = text.split("\n")
+    
+    # Center each line and join them back together
+    centered_lines = [line.center(terminal_width, fill_char) for line in lines]
+    
+    return "\n".join(centered_lines)
+
+def center_block_text(text, fill_char=" "):
+    # Get terminal width
+    terminal_width = os.get_terminal_size().columns
+    
+    # Split the text into lines in case it's multiline
+    lines = text.split("\n")
+    
+    # Center each line and join them back together
+    centered_lines = [line.center(terminal_width, fill_char) for line in lines]
+    
+    return "\n".join(centered_lines)
+
+def align_and_center_categories(categories):
+    """
+    Aligns category names and centers the entire block of text in the terminal using the os module.
+
+    Args:
+        categories (list): List of category names.
+
+    Returns:
+        str: A string representing the aligned and centered block of category names.
+    """
+    # Find the longest category name for formatting
+    longest_category_length = len(max(categories, key=len))
+    
+    # Calculate padding for the indices, assuming single or double-digit indices
+    index_padding = 4  # Adjust this as needed (e.g., "[10] - " is 7 characters)
+    
+    # Construct the multiline text block with right-aligned indices and left-aligned names
+    category_list = []
+    for i, category in enumerate(sorted(categories), 1):
+        #index_str = f"[{i}]".rjust(index_padding)
+        # Adjust the total line length to longest category length + index length + separator
+        line_length = longest_category_length + index_padding + len(" - ")
+        category_line = f"{category.title()}".ljust(line_length)
+        category_list.append(category_line)
+    
+    # Combine into a single string block
+    multiline_text_block = "\n".join(category_list)
+    
+    # Center the entire block
+    centered_block = center_block_text(multiline_text_block)
+    return centered_block
 
 #======================#
 # NETWORKING FUNCTIONS #
@@ -222,3 +284,51 @@ def resolve_hostname(hostname):
     except socket.gaierror:
         raise ValueError(f"Could not resolve hostname: {hostname}")
     
+    
+#===========================#
+# IP Sanitaization Function #
+#===========================#
+def sanitize_target_input(target_input):
+    # This function will sanitize target_input (IP Address) to correct any errors or spelling mistakes done by the user.
+    dirty_input = str(target_input)
+    stripped_ip = []
+    
+    # Split the IP by puncuation marks.
+    ip_octets = dirty_input.split(".")
+    
+    for octet in ip_octets:
+        # Remove spaces
+        cleaned_octets = octet.replace(" ", "")
+        stripped_ip.append(cleaned_octets)
+    
+    # Reassemble IP
+    cleaned_ip = ".".join(stripped_ip)
+    
+    # Check if valid IPv4 Address
+    if len(stripped_ip) != 4:
+        # If IP has more or less than four octets, then raise ValueError. | Should add graceful exit here. <!!)
+        raise ValueError(f"\"{cleaned_ip}\" is not a valid IPv4 address.")
+    else:    
+        return cleaned_ip
+    
+# Port Input Sanitization
+def sanitize_port_input(port_input):
+    # This function will sanitize the input if and correct spelling mistakes done by the user.
+    dirty_input = str(port_input)
+    cleaned_ports = []
+    
+    # Split the input by comma.
+    port_parts = dirty_input.split(",")
+    
+    for part in port_parts:
+        # Remove spaces and handle ranges.
+        cleaned_part = part.replace(" ", "")
+        if "-" in cleaned_part:
+            # Correcting the input format.
+            range_parts = cleaned_part.split("-")
+            cleaned_range = f"{range_parts[0].strip()}-{range_parts[1].strip()}"
+            cleaned_ports.append(cleaned_range)
+        else:
+            # Append individual ports
+            cleaned_ports.append(cleaned_part)
+    return ",".join(cleaned_ports)

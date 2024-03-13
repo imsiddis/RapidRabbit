@@ -20,7 +20,7 @@ import hashlib
 import threading
 import os
 from multiprocessing import Queue
-from internal_library.asset_functions import beautify, beautify_string, loading_bar, clear_screen, beautify_title, menu_option
+from internal_library.asset_functions import beautify, beautify_string, loading_bar, clear_screen, beautify_title, menu_option, center_text, center_block_text
 from internal_library.detect_wordlists import detect_wordlists
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
@@ -215,15 +215,25 @@ class HashCracker:
         if not self.found:
             print("\nFailed to crack the hash.")
 
-def main_menu():
-    clear_screen()
-    print(beautify_title("Hash Cracker", "=", 2))
+def menu_options():
+    select_wordlist = menu_option(1, "Select Wordlist")
+    enter_hash = menu_option(2, "Enter Hash to Crack")
+    exit = menu_option(3, "Exit")
+    return f"{select_wordlist}{enter_hash}{exit}"
 
-    print("Select an option:")
-    print(menu_option(1, "Select Wordlist"))
-    print(menu_option(2, "Enter Hash to Crack"))
-    print(menu_option(3, "Exit"))
-    choice = input("> ").strip()
+def main_menu(chosen_wordlist=None, hash_to_crack=None):
+    clear_screen()
+    print(beautify_title("Hash Cracker", "=", 5))
+    
+    if chosen_wordlist == None:
+        print("Selected Wordlist: N/A")
+    else:
+        print(f"Selected Wordlist: {chosen_wordlist}")
+
+    print("\nSelect an option:")
+    options = menu_options()
+    print(f"{options}")
+    choice = input(">> ").strip()
     return choice
 
 def select_wordlist(wordlists):
@@ -242,13 +252,15 @@ if __name__ == "__main__":
     wordlists = detect_wordlists()
     wordlist_path = None # Initialize the wordlist path
     hash_to_crack = None # Initialize the hash to crack
+    select_wordlist_name = None # Initialize the selected wordlist name
 
     while True: # Main menu loop
-        choice = main_menu()
+        choice = main_menu(select_wordlist_name)
         if choice == '1': # Select wordlist
-            selected_wordlist = select_wordlist(wordlists)
+            selected_wordlist = select_wordlist(wordlists) # Select a wordlist
             if selected_wordlist:
                 wordlist_path = os.path.join("wordlists", selected_wordlist)
+                select_wordlist_name = selected_wordlist # Update the selected wordlist name
                 print(f"Selected wordlist: {selected_wordlist}")
                 time.sleep(1)
         elif choice == '2': # Enter hash to crack

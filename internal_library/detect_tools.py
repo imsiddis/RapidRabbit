@@ -68,7 +68,6 @@ def tool_json_append(tool_folder_path, tools_info):
         print(f"Serialization error: {e}")
     except Exception as e:
         print(f"Error writing to {json_path}: {e}")
-
 # Main function to coordinate the script execution
 def main():
     clear_screen()

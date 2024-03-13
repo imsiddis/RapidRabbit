@@ -16,6 +16,7 @@ def about():
 def main():
     clear_screen()
     about()
+    input("\nPress 'Enter' to continue... ")
 
 if __name__ == "__main__":
     main()

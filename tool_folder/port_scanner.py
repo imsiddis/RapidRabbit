@@ -15,7 +15,7 @@ tool_details = {
 # Imports #
 #=========#
 import socket
-from internal_library.asset_functions import beautify_string, clear_screen
+from internal_library.asset_functions import beautify_string, clear_screen, sanitize_target_input, sanitize_port_input
 
 def is_port_open(target, port):
     # Creating the socket object.
@@ -90,50 +90,54 @@ def port_select(user_input):
 #   Sanitize Input   # 
 #====================#
 
-# Port Input Sanitization
-def sanitize_port_input(port_input):
-    # This function will sanitize the input if and correct spelling mistakes done by the user.
-    dirty_input = str(port_input)
-    cleaned_ports = []
+#***************************************#
+#> MOVED SANITATION TO ASSET FUNCTIONS <#
+#***************************************#
+
+## Port Input Sanitization
+#def sanitize_port_input(port_input):
+#    # This function will sanitize the input if and correct spelling mistakes done by the user.
+#    dirty_input = str(port_input)
+#    cleaned_ports = []
+#    
+#    # Split the input by comma.
+#    port_parts = dirty_input.split(",")
+#    
+#    for part in port_parts:
+#        # Remove spaces and handle ranges.
+#        cleaned_part = part.replace(" ", "")
+#        if "-" in cleaned_part:
+#            # Correcting the input format.
+#            range_parts = cleaned_part.split("-")
+#            cleaned_range = f"{range_parts[0].strip()}-{range_parts[1].strip()}"
+#            cleaned_ports.append(cleaned_range)
+#        else:
+#            # Append individual ports
+#            cleaned_ports.append(cleaned_part)
+#    return ",".join(cleaned_ports)
     
-    # Split the input by comma.
-    port_parts = dirty_input.split(",")
-    
-    for part in port_parts:
-        # Remove spaces and handle ranges.
-        cleaned_part = part.replace(" ", "")
-        if "-" in cleaned_part:
-            # Correcting the input format.
-            range_parts = cleaned_part.split("-")
-            cleaned_range = f"{range_parts[0].strip()}-{range_parts[1].strip()}"
-            cleaned_ports.append(cleaned_range)
-        else:
-            # Append individual ports
-            cleaned_ports.append(cleaned_part)
-    return ",".join(cleaned_ports)
-    
-def sanitize_target_input(target_input):
-    # This function will sanitize target_input (IP Address) to correct any errors or spelling mistakes done by the user.
-    dirty_input = str(target_input)
-    stripped_ip = []
-    
-    # Split the IP by puncuation marks.
-    ip_octets = dirty_input.split(".")
-    
-    for octet in ip_octets:
-        # Remove spaces
-        cleaned_octets = octet.replace(" ", "")
-        stripped_ip.append(cleaned_octets)
-    
-    # Reassemble IP
-    cleaned_ip = ".".join(stripped_ip)
-    
-    # Check if valid IPv4 Address
-    if len(stripped_ip) != 4:
-        # If IP has more or less than four octets, then raise ValueError. | Should add graceful exit here. <!!)
-        raise ValueError(f"\"{cleaned_ip}\" is not a valid IPv4 address.")
-    else:    
-        return cleaned_ip
+#def sanitize_target_input(target_input):
+#    # This function will sanitize target_input (IP Address) to correct any errors or spelling mistakes done by the user.
+#    dirty_input = str(target_input)
+#    stripped_ip = []
+#    
+#    # Split the IP by puncuation marks.
+#    ip_octets = dirty_input.split(".")
+#    
+#    for octet in ip_octets:
+#        # Remove spaces
+#        cleaned_octets = octet.replace(" ", "")
+#        stripped_ip.append(cleaned_octets)
+#    
+#    # Reassemble IP
+#    cleaned_ip = ".".join(stripped_ip)
+#    
+#    # Check if valid IPv4 Address
+#    if len(stripped_ip) != 4:
+#        # If IP has more or less than four octets, then raise ValueError. | Should add graceful exit here. <!!)
+#        raise ValueError(f"\"{cleaned_ip}\" is not a valid IPv4 address.")
+#    else:    
+#        return cleaned_ip
 
 #========[END]=======#
 #   Sanitize Input   # 
@@ -163,7 +167,7 @@ def get_ports():
         input("Error in deciding.")
         exit()
 
-def get_target():
+def get_target(target_choice):
     # Get the target IP from the user 
     target_choice = input("Enter Target IP: ")
     
@@ -185,12 +189,22 @@ def get_target():
 
 def main():
     while True:
+        target = ""
+        port_choice = ""
+        print("Testing of port scanner:")
+        target_choice = input("Enter Target IP: ")
+        if target_choice.lower == "exit":
+            break
+        else:
+            target = sanitize_target_input(target_choice)
+            print(f"IP Chosen: {target}")
         try:
-            print("Testing of port scanner:")
-            target = get_target()
-
             # Get ports as a list
             port_choice = input("Enter port range or select individual ports.\nEnter here: ")
+            if port_choice == "exit":
+                break
+            else:
+                pass
             sanitized_choice = sanitize_port_input(port_choice)
             ports = []
 
@@ -237,7 +251,9 @@ def main():
             input("Press Enter to return to main menu.")
             return
         except KeyboardInterrupt:
-            print("Exiting")
+            print("\nScan cancelled by user.")
+            input("Press Enter to return to main menu.")
+            break
         except ValueError as e:
             print(f"An error occurred: {e}")
             input("Press Enter to continue...")
@@ -245,7 +261,10 @@ def main():
             
 
 if __name__ == "__main__":
-    main()
+    while True:
+        clear_screen()
+        main()
+        
 
 # class PortScanner:
 #     def __init__(self):

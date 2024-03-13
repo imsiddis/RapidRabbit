@@ -8,11 +8,10 @@ import datetime
 import platform
 from internal_library.asset_functions import clear_screen, loading_bar, exit_program, beautify_string, beautify_title, beautify
 import Network.port_scanner as portscan
-import start_SQLite
 import socket
 from internal_library.detect_tools import main as detect
 from internal_library.test_auto_menu import main as auto_menu
-from internal_library.asset_functions import splash_screen, splash_logo_no_indent
+from internal_library.asset_functions import splash_screen, splash_logo_no_indent, splash_screen_title, clear_screen, center_block_text, center_text
 
 
 
@@ -23,25 +22,31 @@ from internal_library.asset_functions import splash_screen, splash_logo_no_inden
 
 info_box = f"This is the 'Rapid Rabbit Toolkit'.\n\nA lightweight toolkit for Cyber Professionals with the desire for a fast, easy to use set of tools in their profession.\nOne of the benefits of this toolkit is that it is easy to add your own tools or 'modules' as we call it, and the Rapid Rabbit will seamlessly integrate it to the toolkit.\nWe hope you will like it.\n\nBest Regards,\nSiddis"
 
-
+# Centering output.
+splash_logo = center_block_text(splash_logo_no_indent())
+splash_title = center_block_text(splash_screen_title())
+menu_title = center_text(beautify_title("The Rapid Rabbit Framework","~",5))
  
 def main():
     try:
+        # This will display the splash screen for the project.
         clear_screen()
-        welcome_screen = splash_screen()
-        print(welcome_screen)
-        input("\n\n\t\t\t\t\t\t\tPress 'Enter' to continue... ")
+
+        print(splash_logo)
+        print(splash_title)
+        #input("\n\n\t\t\t\t\t\t\tPress 'Enter' to continue... ")
+        enter_to_continue = center_text("Press 'Enter' to continue...")
+        input(f"\n\n{enter_to_continue}")
     except KeyboardInterrupt:
         return
     while True:
         try:
             clear_screen()
             detect()
-            logo = splash_logo_no_indent()
-            print(beautify("The Rapid Rabbit Framework","~",is_title=False))
-
-            print(logo)
+            print(splash_logo) # Prints the splash logo centered
+            print(menu_title) # Prints "The Rapid Rabbit Framework" *centered* with a line of ~ under it. !! See Centering output section above. !!
             auto_menu()
+            input("\nPress 'Enter' to continue... ")
         except KeyboardInterrupt: # Catch the KeyboardInterrupt exception to prevent the program from crashing
             print("\nExiting the program...")
             sys.exit(0)
