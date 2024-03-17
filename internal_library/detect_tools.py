@@ -78,6 +78,7 @@ def main():
         tool_json_append(tool_folder_path, detailed_tools)
         #print(json.dumps(detailed_tools, indent=4))
         #print("Ignored files:", initial_ignore_list + detailed_ignore_list)
+        print("Updated tools.json with the tool details.")
     else:
         print("Tool folder not found. Please ensure it's in the current working directory.")
 

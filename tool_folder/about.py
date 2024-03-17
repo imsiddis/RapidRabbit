@@ -2,6 +2,7 @@ from internal_library.asset_functions import clear_screen, beautify, beautify_st
 
 tool_details = {
     "name":"about",
+    "filename":"about.py",
     "Category":"Information",
     "version":"1.0",
     "Description":"This will be the about section for the project."

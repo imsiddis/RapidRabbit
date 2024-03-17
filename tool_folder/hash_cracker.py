@@ -274,5 +274,10 @@ if __name__ == "__main__":
                 time.sleep(1)
         elif choice == '3':
             break
+        elif "hash:" in choice: # For testing purposes
+            hash_to_crack = choice.split(":")[1].strip()
+            hash_cracker = HashCracker(wordlist_path)
+            hash_cracker.crack_hash(hash_to_crack)
+            input("Press ENTER to continue...")
         clear_screen()
         

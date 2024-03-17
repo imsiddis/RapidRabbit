@@ -6,11 +6,11 @@ import sys
 import time
 import datetime
 import platform
-from internal_library.asset_functions import clear_screen, loading_bar, exit_program, beautify_string, beautify_title, beautify
+from internal_library.asset_functions import loading_bar, exit_program, beautify_string, beautify_title, beautify
 import Network.port_scanner as portscan
 import socket
 from internal_library.detect_tools import main as detect
-from internal_library.test_auto_menu import main as auto_menu
+from internal_library.auto_menu import main as auto_menu
 from internal_library.asset_functions import splash_screen, splash_logo_no_indent, splash_screen_title, clear_screen, center_block_text, center_text
 
 
@@ -28,6 +28,7 @@ splash_title = center_block_text(splash_screen_title())
 menu_title = center_text(beautify_title("The Rapid Rabbit Framework","~",5))
  
 def main():
+    detected = False
     try:
         # This will display the splash screen for the project.
         clear_screen()
@@ -42,7 +43,11 @@ def main():
     while True:
         try:
             clear_screen()
-            detect()
+            if detected == False:
+            #    loading_bar()
+                detect()
+                detected = True
+                
             print(splash_logo) # Prints the splash logo centered
             print(menu_title) # Prints "The Rapid Rabbit Framework" *centered* with a line of ~ under it. !! See Centering output section above. !!
             auto_menu()
