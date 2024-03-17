@@ -7,7 +7,6 @@ import time
 import datetime
 import platform
 from internal_library.asset_functions import loading_bar, exit_program, beautify_string, beautify_title, beautify
-import Network.port_scanner as portscan
 import socket
 from internal_library.detect_tools import main as detect
 from internal_library.auto_menu import main as auto_menu
