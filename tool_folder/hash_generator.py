@@ -8,11 +8,10 @@ from internal_library.asset_functions import clear_screen, beautify, beautify_st
 
 tool_details = {
     "name": "Hash Generator",
-    "file_name": "hash_generator.py",
+    "filename": "hash_generator.py",
     "category": "Hash Cracking",
     "version": "1.0",
-    "description": "This tool will generate a hash of the given string in several different formats.",
-    "location" : "RapidRabbit/tool_folder/hash_generator.py"
+    "description": "This will generate hashes using an input."
 }
 
 
