@@ -60,4 +60,11 @@ def main():
         input("\nPress 'Enter' to continue... ")
     
 if __name__ == "__main__":
-    main()
+    while True:
+        try:
+            main()
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            input("\nPress 'Enter' to continue... ")
