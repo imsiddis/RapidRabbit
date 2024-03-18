@@ -92,7 +92,7 @@ On Unix-like systems (Linux/macOS):
 Set PYTHONPATH temporarily by running the following in your terminal:
 
 ```bash
-export PYTHONPATH=$PYTHONPATH:/path/to/project
+export PYTHONPATH="${PYTHONPATH}:PATH/TO/PROJECT"
 ```
 
 3. **Verify the PYTHONPATH:**
