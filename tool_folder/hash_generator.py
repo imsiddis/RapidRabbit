@@ -4,7 +4,7 @@
 
 # Imports
 import hashlib
-from internal_library.asset_functions import clear_screen, beautify, beautify_string, beautify_title
+from internal_library.asset_functions import clear_screen, beautify, beautify_string, beautify_title, get_os
 
 tool_details = {
     "name": "Hash Generator",
@@ -22,6 +22,7 @@ tool_details = {
 string = ""
 hashes = {}
 
+operating_system = get_os()
 #==================#
 #  Hash Functions  #
 #==================#
@@ -35,9 +36,11 @@ def generate_hash(string):
         "sha224": hashlib.sha224(string.encode()).hexdigest(),
         "sha256": hashlib.sha256(string.encode()).hexdigest(),
         "sha384": hashlib.sha384(string.encode()).hexdigest(),
-        "sha512": hashlib.sha512(string.encode()).hexdigest(),
-        "ntlm": hashlib.new('md4', string.encode('utf-16le')).hexdigest()
+        "sha512": hashlib.sha512(string.encode()).hexdigest()
     }
+    
+    if operating_system == "Windows":
+        hashes["ntlm"] = hashlib.new('md4', string.upper().encode()).hexdigest()
     
     return hashes
 
