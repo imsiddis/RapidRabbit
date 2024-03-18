@@ -69,6 +69,41 @@ It is highly recommended to include a "try" and "except" block in your main() fu
 
 * **Refresh The Toolkit:** To detect and integrate your new script, either restart the toolkit or press "Enter" a few times while in the main menu to refresh the tool and category lists.
 
+
+# Troubleshooting
+If you encounter any issues while using The Rapid Rabbit Toolkit, please refer to the following troubleshooting tips:
+## Configuring Python Path
+
+If you encounter a `ModuleNotFoundError` stating that the "internal_library" module is not found, you may need to adjust your Python path. Follow these steps to ensure Python can locate the module:
+
+1. **Identify Your Python Executable:**
+
+   Determine the path of the Python executable you're using. You can do this by running:
+
+For Linux:
+   ```bash
+   which python3
+   ```
+2. **Set the PYTHONPATH Environment Variable:**
+
+Next, add the root directory of this project to your PYTHONPATH environment variable. Replace /path/to/project with the actual path to the project's root directory.
+
+On Unix-like systems (Linux/macOS):
+Set PYTHONPATH temporarily by running the following in your terminal:
+
+```bash
+export PYTHONPATH=$PYTHONPATH:/path/to/project
+```
+
+3. **Verify the PYTHONPATH:**
+```bash	
+python3 -c "import sys; print(sys.path)"
+```
+This command will print the current Python path. Verify that the project's root directory is included in the output.
+
+## Reporting Issues
+If you encounter any issues while using The Rapid Rabbit Toolkit, please open an issue in the GitHub repository. Be sure to include a detailed description of the problem, including any error messages or other relevant information. This will help us identify and resolve the issue as quickly as possible.
+
 ## Contributing
 Contributions to The Rapid Rabbit Toolkit are welcome! Whether it's adding new features, improving existing tools, or reporting bugs, your input helps make this toolkit better for everyone.
 
