@@ -324,7 +324,7 @@ This tool will allow you to stress test a network by conducting various attacks 
     target_ip = is_target_valid()
     tcp_flood_attack(target_ip, 80)
 
-if __name__ == "main":
+if __name__ == "__main__":
     while True:
         clear_screen()
         main()
