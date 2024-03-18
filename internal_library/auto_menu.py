@@ -13,6 +13,7 @@
 """
 import os
 import json
+import sys
 import subprocess
 from internal_library.asset_functions import clear_screen, beautify_title, center_text
 from internal_library.detect_tools import main as detect
@@ -219,7 +220,7 @@ def main():
         print(f"Running {chosen_tool['name']} from {tool_script_path}...") # Note to self: Hide this from output?
         
         # Execute the tool script
-        subprocess.run(["python", tool_script_path], check=True)
+        subprocess.run([sys.executable, tool_script_path], check=True)
         
     except (ValueError, IndexError):
         print("Invalid selection. Please enter a valid number.")

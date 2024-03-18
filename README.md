@@ -13,7 +13,7 @@ The toolkit is designed to run on any platform that supports Python, and is inte
 To get started with The Rapid Rabbit Toolkit, clone this repository to your local machine and ensure you have Python installed. The toolkit is designed to run on any platform that supports Python.
 
 ### Prerequisites
-* Python 3.x
+* Python 3.10.11 or later (Tested on Python 3.10.11)
 * Basic knowledge of command-line interfaces
 * Familiarity with Python scripting
 
