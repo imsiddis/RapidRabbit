@@ -252,13 +252,14 @@ def is_target_valid():
 #=================#
 def menu_stresser_options():
     # Options
-    tcp_floot_option = menu_option(1, "TCP Flood Attack")
-    syn_flood_option = menu_option(2, "SYN Flood Attack")
-    udp_flood_option = menu_option(3, "UDP Flood Attack")
-    http_flood_option = menu_option(4, "HTTP Flood Attack")
-    slowloris_option = menu_option(5, "Slowloris Attack")
+    tcp_floot_option = menu_option(1, "TCP Flood Attack (Currently testing, varied performance based on network and OS)")
+    syn_flood_option = menu_option(2, "SYN Flood Attack (Will be removed in future versions)")
+    udp_flood_option = menu_option(3, "UDP Flood Attack (Currently Fastest)")
+    http_flood_option = menu_option(4, "HTTP Flood Attack (Not yet implemented)")
+    slowloris_option = menu_option(5, "Slowloris Attack (Not yet implemented)")
+    ICMP_option = menu_option(6, "ICMP Attack (Testing Phase)")
     
-    options = f"{tcp_floot_option}{syn_flood_option}{udp_flood_option}{http_flood_option}{slowloris_option}"
+    options = f"{tcp_floot_option}{syn_flood_option}{udp_flood_option}{http_flood_option}{slowloris_option}{ICMP_option}"
     return options
     
 #=================#
@@ -309,13 +310,16 @@ This tool will allow you to stress test a network by conducting various attacks 
     elif attack_choice == "5": # Slowloris Attack
         target_ip = is_target_valid()
         slowloris_attack()
+    elif attack_choice == "6": # ICMP Attack
+        target_ip = is_target_valid()
+        ping_attack(target_ip, 10000)
     else:
         print("Invalid option. Please try again.")
     
     input("Press Enter to Continue...")
     
-    target_ip = is_target_valid()
-    tcp_flood_attack(target_ip, 80)
+    #target_ip = is_target_valid()
+    #tcp_flood_attack(target_ip, 80)
 
 if __name__ == "__main__":
     while True:
