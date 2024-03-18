@@ -98,7 +98,7 @@ def ping_attack(target_ip, number_of_pings=4):
 #|> TCP Flood Attack <|#
 #======================#
 
-def tcp_flood(target_ip, target_port, message="Hello"):
+def tcp_flood(target_ip, target_port,  message="Hello"):
     """Function to send TCP packets to the target IP and port."""
     global packets_sent
     try:
@@ -289,14 +289,7 @@ This tool will allow you to stress test a network by conducting various attacks 
         else:
             target_port = int(target_port)
         
-        # Ask for the number of packets to send    
-        packets = input("Enter the number of packets to send (0 for infinite): \n>> ")
-        if packets == "":
-            packets = 0
-        else:
-            packets = int(packets)
-        
-        tcp_flood_attack(target_ip, target_port, packets=packets)
+        tcp_flood_attack(target_ip, target_port)
         
     elif "tcp:" in attack_choice: # TCP Flood Attack |COMMAND| Default port is 80 and packets is 0. | Command: tcp:<ip> |
         attack_choice = attack_choice.split(":")
