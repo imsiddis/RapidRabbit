@@ -94,6 +94,12 @@ Set PYTHONPATH temporarily by running the following in your terminal:
 ```bash
 export PYTHONPATH="${PYTHONPATH}:PATH/TO/PROJECT"
 ```
+On Wiondows:
+Set PYTHONPATH temporarily by running the following in your terminal:
+
+```bash
+setx PYTHONPATH "%PYTHONPATH%;%cd%"
+```
 
 3. **Verify the PYTHONPATH:**
 ```bash	
