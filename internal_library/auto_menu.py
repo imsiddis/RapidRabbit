@@ -15,7 +15,7 @@ import os
 import json
 import sys
 import subprocess
-from internal_library.asset_functions import clear_screen, beautify_title, center_text
+from internal_library.asset_functions import clear_screen, beautify_title, center_text, beautify_string
 from internal_library.detect_tools import main as detect
 
 tool_list = []
@@ -158,7 +158,8 @@ def main():
     else:
         pass
     
-    
+    hint = beautify_string("# Hint: Type 'exit' to exit the program, 'cls' to clear the screen, or 'help' to display this message. #", "#")
+    print(center_text(hint))
     print("Select a category:") 
     
     # Display the categories with their index numbers
@@ -178,7 +179,15 @@ def main():
             clear_screen()
             return
         elif category_choice == "help":
-            print("Type 'exit' to exit the program, 'cls' to clear the screen, or 'help' to display this message.")
+            print("""
+                  Shortcut commands:
+                    exit - Exit the program
+                    cls - Clear the screen
+                    help - Display this message
+                    update - Update the tool/category list
+                    help - Display this message
+                    
+                  Type 'exit' to exit the program, 'cls' to clear the screen, or 'help' to display this message.""")
             return
         elif category_choice == "crack":
             pass
