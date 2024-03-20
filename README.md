@@ -61,7 +61,7 @@ def main():
 # -- Your Code Here -- #
 if__name__ == "__main__":
     while True:
-        main()"
+        main()
 ```
 It is highly recommended to include a "try" and "except" block in your main() function to handle any exceptions that may occur during the execution of your script. This will help ensure that the toolkit remains stable and responsive.
 
