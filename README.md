@@ -69,6 +69,10 @@ It is highly recommended to include a "try" and "except" block in your main() fu
 
 * **Refresh The Toolkit:** To detect and integrate your new script, either restart the toolkit or press "Enter" a few times while in the main menu to refresh the tool and category lists.
 
+### Adding your own wordlists
+To add your own wordlists to the toolkit, follow these guidelines:
+1. Ensure your wordlist is in a .txt format.
+2. Place your wordlist in the 'wordlists' directory within the toolkit's root directory.<br>If it does not exist, create the 'wordlists' directory within the toolkit's structure.
 
 # Troubleshooting
 If you encounter any issues while using The Rapid Rabbit Toolkit, please refer to the following troubleshooting tips:
