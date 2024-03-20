@@ -98,7 +98,7 @@ Set PYTHONPATH temporarily by running the following in your terminal:
 ```bash
 export PYTHONPATH="${PYTHONPATH}:PATH/TO/PROJECT"
 ```
-On Wiondows:
+On Windows:
 Set PYTHONPATH temporarily by running the following in your terminal:
 
 ```bash
