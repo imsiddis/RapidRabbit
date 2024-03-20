@@ -163,7 +163,7 @@ class HashCracker:
             with open(self.wordlist_path, 'r', encoding='utf-8', errors='ignore') as wordlist:
                 words_batch = []
                 for word in wordlist:
-                    words_batch.append(word.strip())
+                    words_batch.append(word.strip("\n"))
                     if len(words_batch) >= batch_size:
                         if self.found:
                             break
