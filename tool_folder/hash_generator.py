@@ -48,19 +48,19 @@ def main():
     while True:
         clear_screen()
         print(beautify_title("Hash Generator","~",5))
-        print("\nThis tool will generate a hash of the given string in several different formats.")
+        print("\nThis tool will generate a hash of the given string in several different formats.\n\nType 'exit' to return to the main menu.")
         print("\nPlease enter the string to generate the hash: ")
         string = input("\nString: ")
         
         if string == "exit":
-            break
-        
-        hashes = generate_hash(string)
-        print("\nHashes generated successfully.")
-        print("\nHashes:")
-        for hash_type, hash_value in hashes.items():
-            print(f"{hash_type.upper()}: {hash_value}")
-        input("\nPress 'Enter' to continue... ")
+            exit() # Returns to the main menu
+        else:
+            hashes = generate_hash(string)
+            print("\nHashes generated successfully.")
+            print("\nHashes:")
+            for hash_type, hash_value in hashes.items():
+                print(f"{hash_type.upper()}: {hash_value}")
+            input("\nPress 'Enter' to continue... ")
     
 if __name__ == "__main__":
     while True:
