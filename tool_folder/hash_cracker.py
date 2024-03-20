@@ -272,7 +272,8 @@ if __name__ == "__main__":
             else:
                 print("Please select a wordlist first.")
                 time.sleep(1)
-        elif choice == '3':
+        elif choice == '3' or "exit" in choice.lower():
+            print("Exiting the program...")
             break
         elif "hash:" in choice: # For testing purposes
             hash_to_crack = choice.split(":")[1].strip()
