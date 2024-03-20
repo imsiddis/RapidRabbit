@@ -15,7 +15,7 @@ tool_details = {
 # Imports #
 #=========#
 import socket
-from internal_library.asset_functions import beautify_string, clear_screen, sanitize_target_input, sanitize_port_input
+from internal_library.asset_functions import beautify_string, beautify_title, clear_screen, sanitize_target_input, sanitize_port_input, splash_logo_no_indent, center_block_text, center_text
 
 def is_port_open(target, port):
     # Creating the socket object.
@@ -187,77 +187,145 @@ def get_target(target_choice):
 # Get Port Functions #
 #====================#
 
+port_scanner_options = """
+1. Scan Ports
+2. Exit
+"""
+
+help_section = """
+This tool will scan a target to check if ports are open.
+
+Shortcut commands:
+    exit - Exit the program
+    help - Display this message
+
+
+You can enter a port range or select individual ports:
+
+To chose a range you will use the following format:
+    i.e. "20-80", "80-443", "1-65535" etc.
+To chose individual ports you will use the following format:
+    i.e. "80,443,8080,22,21" etc.
+You can also enter a single port to scan.
+    i.e. "80", "443", "8080", "22", "21" etc.
+
+"""
+
+menu_tip = """
+This tool will scan a target to check if ports are open.
+You can enter a port range or select individual ports.
+You can write "exit" to return to the main menu or "help" to display the full help section.
+"""
+
+
 def main():
     while True:
-        target = ""
-        port_choice = ""
-        print("Testing of port scanner:")
-        target_choice = input("Enter Target IP: ")
-        if target_choice.lower == "exit":
-            break
-        else:
-            target = sanitize_target_input(target_choice)
-            print(f"IP Chosen: {target}")
         try:
-            # Get ports as a list
-            port_choice = input("Enter port range or select individual ports.\nEnter here: ")
-            if port_choice == "exit":
-                break
-            else:
-                pass
-            sanitized_choice = sanitize_port_input(port_choice)
-            ports = []
+            clear_screen()
+            target = ""
+            port_choice = ""
+            logo = center_block_text(splash_logo_no_indent())
+            print(logo)
+            title = center_block_text(beautify_title("Port Scanner","~",5))
+            tip = center_text(menu_tip)
+            print(title)
+            print(tip)
+            print(port_scanner_options)
+            
+            user_choice = input(">> ")
+            try:
+                if user_choice == "1":
+                    clear_screen()
+                    print(logo)
+                    print(title)
+                    print("Testing of port scanner:")
+                    target_choice = input("Enter Target IP: ")
+                    if target_choice.lower == "exit":
+                        break
+                    elif target_choice.lower == "help":
+                        print(help_section)
+                        input("Press Enter to continue.")
+                        break
+                    else:
+                        target = sanitize_target_input(target_choice)
+                        print(f"IP Chosen: {target}")
+                    try:
+                        # Get ports as a list
+                        port_choice = input("Enter port range or select individual ports.\nEnter here: ")
+                        if port_choice == "exit":
+                            exit()
+                        else:
+                            pass
+                        sanitized_choice = sanitize_port_input(port_choice)
+                        ports = []
 
-            # Display Status: In Progress
-            styled_in_progress = beautify_string("[SCANNING IN PROGRESS]", "=")
+                        # Display Status: In Progress
+                        styled_in_progress = beautify_string("[SCANNING IN PROGRESS]", "=")
 
-            # Different Scanning Vectors
-            if "-" in sanitized_choice:
-                # Range
-                print(styled_in_progress) # Print Status: Progress
-                ports = port_range(sanitized_choice)
-            elif "," in sanitized_choice:
-                # Individual Range 
-                print(styled_in_progress) # Print Status: Progress
-                ports = port_select(sanitized_choice)
-            else:
-                # Specific
-                print(styled_in_progress) # Print Status: Progress
-                status = is_port_open(target, int(port_choice))
-                if status == False:
-                    print(f"Port {port_choice} is [CLOSED].")
-                else:
-                    #print(f"Port {port_choice} is [OPEN]")
-                    ports.append(int(port_choice))
+                        # Different Scanning Vectors
+                        if "-" in sanitized_choice:
+                            # Range
+                            print(styled_in_progress) # Print Status: Progress
+                            ports = port_range(sanitized_choice)
+                        elif "," in sanitized_choice:
+                            # Individual Range 
+                            print(styled_in_progress) # Print Status: Progress
+                            ports = port_select(sanitized_choice)
+                        else:
+                            # Specific
+                            print(styled_in_progress) # Print Status: Progress
+                            status = is_port_open(target, int(port_choice))
+                            if status == False:
+                                print(f"Port {port_choice} is [CLOSED].")
+                            else:
+                                #print(f"Port {port_choice} is [OPEN]")
+                                ports.append(int(port_choice))
 
-            ports_open = scan_ports(target, ports)
+                        ports_open = scan_ports(target, ports)
 
-            # Reporting Findings in nice formatting.
-            num_open_ports = len(ports_open)
-            str_num_ports = f"Amount of open ports: {num_open_ports}"
+                        # Reporting Findings in nice formatting.
+                        num_open_ports = len(ports_open)
+                        str_num_ports = f"Amount of open ports: {num_open_ports}"
 
-            print(beautify_string(str_num_ports, "-"))
+                        print(beautify_string(str_num_ports, "-"))
 
-            if len(ports_open) != 0:
-                print("\nOpen Ports Discovered:")
-                print("----------------------")
-                for i in ports_open:
-                    print(f"Port: {i}")
-                else:
-                    pass
+                        if len(ports_open) != 0:
+                            print("\nOpen Ports Discovered:")
+                            print("----------------------")
+                            for i in ports_open:
+                                print(f"Port: {i}")
+                            else:
+                                pass
+                            
+                        end_of_scan = beautify_string("End of Scan", "~")
+                        print(f"\n{end_of_scan}")
+                        input("Press Enter to return to main menu.")
+                        return
+                    except KeyboardInterrupt:
+                        print("\nScan cancelled by user.")
+                        input("Press Enter to return to main menu.")
+                        break
+                    except ValueError as e:
+                        print(f"An error occurred: {e}")
+                        input("Press Enter to continue...")
+                        return
                 
-            end_of_scan = beautify_string("End of Scan", "~")
-            print(f"\n{end_of_scan}")
-            input("Press Enter to return to main menu.")
-            return
+                elif user_choice == "2" or "exit".lower():
+                    print("Not exiting right")
+                    print("Exiting the program...")
+                    exit()
+                    
+            except KeyboardInterrupt:
+                print("\nScan cancelled by user.")
+                input("Press Enter to return to main menu.")
+                break
         except KeyboardInterrupt:
             print("\nScan cancelled by user.")
-            input("Press Enter to return to main menu.")
-            break
+            exit()
+            
         except ValueError as e:
-            print(f"An error occurred: {e}")
-            input("Press Enter to continue...")
-            return
+            print("Returning to main menu.")
+            exit()
             
 
 if __name__ == "__main__":
