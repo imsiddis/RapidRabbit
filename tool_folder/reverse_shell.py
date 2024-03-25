@@ -7,7 +7,7 @@
 import socket
 import subprocess
 import platform
-from internal_library.asset_functions import clear_screen
+from internal_library.asset_functions import clear_screen, sanitize_port_input, sanitize_target_input
 from time import sleep
 
 
@@ -70,7 +70,7 @@ def connect_mode(host, port): # Connect mode
             s.connect((host, port))
             print(f"Connected to {host}:{port}")
             while True:
-                message = input("Send: ").encode()
+                message = input(">> ").encode()
                 s.sendall(message)
                 data = s.recv(1024)
                 print(f"Received: {data.decode()}")
@@ -82,16 +82,34 @@ def main():
     Main function to run the Netcat clone. Handles user inputs and switches between modes.
     """
     while True:
+        print(menu_output)
         choice = input("Select an option: ").upper() # Get user input and convert to uppercase
 
-        if choice == "L"():
-            port = int(input("Enter the port to listen on: ")) # Get the port number from the user
-            listen_mode(port)
-        elif choice == "C"():
+        if choice == "L":
+            port = input("Enter the port to listen on: ") # Get the port number from the user
+            if port.isdigit():
+                port = int(port)
+                listen_mode(port)
+            else:
+                print("Invalid port number. Please enter a valid port number.")
+                sleep(2)
+        elif choice == "C":
             host = input("Enter the host to connect to: ") # Get the host to connect to
-            port = int(input("Enter the port to connect to: ")) # Get the port to connect to
-            connect_mode(host, port)
-        elif choice == "Q" or choice == "3" or choice == "EXIT"(): # Exit the program
+            try:
+                clean_host = sanitize_target_input(host)
+            except ValueError as e:
+                print(f"Error: {e}")
+                sleep(2)
+                continue
+            
+            try:
+                port = int(input("Enter the port to connect to: ")) # Get the port to connect to
+            except ValueError:
+                print("Invalid port number. Please enter a valid port number.")
+                sleep(2)
+                continue
+            connect_mode(clean_host, port)
+        elif choice == "Q" or choice == "3" or choice == "EXIT": # Exit the program
             print("Exiting Netcat Clone.")
             sleep(2)
             exit()
