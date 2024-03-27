@@ -354,8 +354,6 @@ def main():
             
 
 if __name__ == "__main__":
-    
-    # Parse command-line arguments
     args = parse_args()
     if args.target and args.ports:
         # Convert ports from string to list of integers
@@ -365,14 +363,26 @@ if __name__ == "__main__":
         if args.random:
             ports_to_scan = random_port_order(ports_to_scan)
             
+        # Determine which scan function to use based on the delay arguments
         if args.min_delay > 0 or args.max_delay > 0:
             # Perform the scan with delays
-            slow_scan(args.target, ports_to_scan, args.min_delay, args.max_delay)
-        
+            open_ports = slow_scan(args.target, ports_to_scan, args.min_delay, args.max_delay)
         else:
-            # Perform the scan with potential delays
-            scan_ports(args.target, ports_to_scan)
+            # Perform the regular scan without delays
+            open_ports = scan_ports(args.target, ports_to_scan)
+            
+        # Reporting Findings in nice formatting.
+        num_open_ports = len(open_ports)
+        str_num_ports = f"Amount of open ports: {num_open_ports}"
+        print(beautify_string(str_num_ports, "-"))
+
+        if num_open_ports != 0:
+            print("\nOpen Ports Discovered:")
+            print("----------------------")
+            for port in open_ports:
+                print(f"Port: {port}")
         
+        print(beautify_string("End of Scan", "~"))
     else:
         # CLI Application
         while True:
