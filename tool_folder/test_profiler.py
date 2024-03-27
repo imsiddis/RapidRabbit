@@ -2,13 +2,13 @@
 # As the saying goes "Knowledge is power", especially when you are targeting someone specific.
 # The data stored in the profiles, should then be able to be used by other scripts.
 
-tool_details = {
-    "name":"Profiler",
-    "filename":"test_profiler.py",
-    "Category":"Profiles", 
-    "Version":"a0.1",
-    "Description":"The profiler lets you manage target profiles."
-}
+#tool_details = {
+#    "name":"Profiler",
+#    "filename":"test_profiler.py",
+#    "Category":"Profiles", 
+#    "Version":"a0.1",
+#    "Description":"The profiler lets you manage target profiles."
+#}
 
 # Imports
 import json
