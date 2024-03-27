@@ -15,7 +15,49 @@ tool_details = {
 # Imports #
 #=========#
 import socket
+import random
+import time
+import argparse
 from internal_library.asset_functions import beautify_string, beautify_title, clear_screen, sanitize_target_input, sanitize_port_input, splash_logo_no_indent, center_block_text, center_text
+
+#=================#
+# Argument Parser #
+#=================#
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Port Scanner")
+    parser.add_argument("-t", "--target", help="Target IP address to scan")
+    parser.add_argument("-p", "--ports", help="Port range to scan, e.g., '20-80' or '80,443'")
+    parser.add_argument("-r", "--random", action="store_true", help="Randomize the order of port scanning")
+    parser.add_argument("--min-delay", type=float, default=0, help="Minimum delay between port scans in seconds")
+    parser.add_argument("--max-delay", type=float, default=0, help="Maximum delay between port scans in seconds")
+    args = parser.parse_args()
+
+    # Sanitize inputs if they are provided
+    if args.target:
+        args.target = sanitize_target_input(args.target)
+    if args.ports:
+        args.ports = sanitize_port_input(args.ports)
+    
+    return args
+
+
+def process_ports_arg(ports_str):
+    """
+    Processes the ports argument string and returns a list of port numbers.
+    """
+    ports = []
+    if "-" in ports_str:
+        ports = port_range(ports_str)
+    elif "," in ports_str:
+        ports = port_select(ports_str)
+    elif ports_str.isdigit():
+        ports = [int(ports_str)]
+    else:
+        raise ValueError("Invalid ports format. Use 'start-end' for range or 'port1,port2,...' for individual ports.")
+    return ports
+
 
 def is_port_open(target, port):
     # Creating the socket object.
@@ -44,6 +86,46 @@ def scan_ports(target, port_range):
             print(f"Port {port} is [CLOSED].")
     
     return open_ports
+
+#========================#
+# Stealth Scan Functions #
+#========================#
+
+def slow_scan(target, port_range, min_delay=1, max_delay=0):
+    open_ports = []
+    
+    for port in port_range:
+        
+        time_delay = random.uniform(min_delay, max_delay) # Random delay between scans
+        time.sleep(time_delay) # Sleep for random delay
+        
+        if is_port_open(target, port):
+            open_ports.append(port)
+            print(f"Port {port} is [-> OPEN <-]")
+        else:
+            print(f"Port {port} is [CLOSED].")
+    
+    return open_ports
+
+
+
+def random_port_order(port_list):
+    """
+    Randomizes the order of a given list of port numbers.
+    
+    Parameters:
+    - port_list: A list of port numbers.
+    
+    Returns:
+    - A list of ports in a random order.
+    """
+    # Make a copy of the port list to avoid modifying the original list
+    ports = list(port_list)
+    
+    # Shuffle the list of ports to randomize their order
+    random.shuffle(ports)
+    
+    return ports
 
 
 #==========================#
@@ -85,63 +167,6 @@ def port_select(user_input):
         port_list.append(int(i))    
     return port_list
 
-
-#=======[START]======#
-#   Sanitize Input   # 
-#====================#
-
-#***************************************#
-#> MOVED SANITATION TO ASSET FUNCTIONS <#
-#***************************************#
-
-## Port Input Sanitization
-#def sanitize_port_input(port_input):
-#    # This function will sanitize the input if and correct spelling mistakes done by the user.
-#    dirty_input = str(port_input)
-#    cleaned_ports = []
-#    
-#    # Split the input by comma.
-#    port_parts = dirty_input.split(",")
-#    
-#    for part in port_parts:
-#        # Remove spaces and handle ranges.
-#        cleaned_part = part.replace(" ", "")
-#        if "-" in cleaned_part:
-#            # Correcting the input format.
-#            range_parts = cleaned_part.split("-")
-#            cleaned_range = f"{range_parts[0].strip()}-{range_parts[1].strip()}"
-#            cleaned_ports.append(cleaned_range)
-#        else:
-#            # Append individual ports
-#            cleaned_ports.append(cleaned_part)
-#    return ",".join(cleaned_ports)
-    
-#def sanitize_target_input(target_input):
-#    # This function will sanitize target_input (IP Address) to correct any errors or spelling mistakes done by the user.
-#    dirty_input = str(target_input)
-#    stripped_ip = []
-#    
-#    # Split the IP by puncuation marks.
-#    ip_octets = dirty_input.split(".")
-#    
-#    for octet in ip_octets:
-#        # Remove spaces
-#        cleaned_octets = octet.replace(" ", "")
-#        stripped_ip.append(cleaned_octets)
-#    
-#    # Reassemble IP
-#    cleaned_ip = ".".join(stripped_ip)
-#    
-#    # Check if valid IPv4 Address
-#    if len(stripped_ip) != 4:
-#        # If IP has more or less than four octets, then raise ValueError. | Should add graceful exit here. <!!)
-#        raise ValueError(f"\"{cleaned_ip}\" is not a valid IPv4 address.")
-#    else:    
-#        return cleaned_ip
-
-#========[END]=======#
-#   Sanitize Input   # 
-#====================#
 
 
 #=======[START]======#
@@ -329,73 +354,29 @@ def main():
             
 
 if __name__ == "__main__":
-    while True:
-        clear_screen()
-        main()
+    
+    # Parse command-line arguments
+    args = parse_args()
+    if args.target and args.ports:
+        # Convert ports from string to list of integers
+        ports_to_scan = process_ports_arg(args.ports)
         
-
-# class PortScanner:
-#     def __init__(self):
-#         self.timeout = 1  # Timeout for socket connection attempts
-
-#     def is_port_open(self, target, port):
-#         try:
-#             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-#                 s.settimeout(self.timeout)
-#                 result = s.connect_ex((target, port))
-#                 if result == 0:
-#                     return True
-#                 else:
-#                     return False
-#         except:
-#             return False
-
-#     def scan_ports(self, target, ports):
-#         open_ports = []
-#         for port in ports:
-#             if self.is_port_open(target, port):
-#                 print(f"Port {port} is [-> OPEN <-]")
-#                 open_ports.append(port)
-#             else:
-#                 print(f"Port {port} is [CLOSED].")
-#         return open_ports
-
-# def parse_port_input(port_input):
-#     ports = []
-#     try:
-#         if '-' in port_input:
-#             start_port, end_port = map(int, port_input.split('-'))
-#             ports = list(range(start_port, end_port + 1))
-#         else:
-#             ports = [int(port_input)]
-#     except ValueError:
-#         print("Invalid port input. Please enter a single port or a range (e.g., 80 or 20-80).")
-#     return ports
-
-# def get_target():
-#     target = input("Enter Target IP or hostname: ")
-#     return target
-
-# def main():
-#     scanner = PortScanner()
-#     try:
-#         target = get_target()
-#         port_input = input("Enter port range or a single port (e.g., 80 or 20-80): ")
-#         ports = parse_port_input(port_input)
-#         if ports:
-#             print("\n[SCANNING IN PROGRESS]")
-#             open_ports = scanner.scan_ports(target, ports)
-#             if open_ports:
-#                 print("\nOpen Ports Discovered:")
-#                 for port in open_ports:
-#                     print(f"Port: {port}")
-#                 input()
-#             else:
-#                 print("No open ports found.")
-#     except KeyboardInterrupt:
-#         print("\nScan cancelled by user.")
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
-
-# if __name__ == "__main__":
-#     main()
+        # Randomize the port order if the -r flag is set
+        if args.random:
+            ports_to_scan = random_port_order(ports_to_scan)
+            
+        if args.min_delay > 0 or args.max_delay > 0:
+            # Perform the scan with delays
+            slow_scan(args.target, ports_to_scan, args.min_delay, args.max_delay)
+        
+        else:
+            # Perform the scan with potential delays
+            scan_ports(args.target, ports_to_scan)
+        
+    else:
+        # CLI Application
+        while True:
+            clear_screen()
+            main()
+        
+# End of script
