@@ -18,6 +18,14 @@ import socket
 import random
 import time
 import argparse
+import struct
+import select
+import pathlib
+import sys
+# Append the parent directory of the current script to sys.path
+current_dir = pathlib.Path(__file__).parent.absolute()  # Get the current directory of the script
+parent_dir = current_dir.parent  # Navigate to the parent directory
+sys.path.append(str(parent_dir))  # Append the parent directory to sys.path
 from internal_library.asset_functions import beautify_string, beautify_title, clear_screen, sanitize_target_input, sanitize_port_input, splash_logo_no_indent, center_block_text, center_text
 
 #=================#
@@ -32,6 +40,7 @@ def parse_args():
     parser.add_argument("-r", "--random", action="store_true", help="Randomize the order of port scanning")
     parser.add_argument("--min-delay", type=float, default=0, help="Minimum delay between port scans in seconds")
     parser.add_argument("--max-delay", type=float, default=0, help="Maximum delay between port scans in seconds")
+    parser.add_argument("-sS", "--stealth-scan", action="store_true", help="Perform a stealth scan using SYN packets")
     args = parser.parse_args()
 
     # Sanitize inputs if they are provided
@@ -107,6 +116,107 @@ def slow_scan(target, port_range, min_delay=1, max_delay=0):
     
     return open_ports
 
+#===================================#
+# SYN Packet Construction Functions #
+#===================================#
+
+def checksum(data):
+    """ Calculate the checksum of the given data (in bytes) """
+    if len(data) % 2 != 0:
+        data += b'\0'
+    s = sum(array := struct.unpack('!'+str(len(data)//2)+'H', data))
+    s = (s >> 16) + (s & 0xffff)
+    s += s >> 16
+    s = ~s & 0xffff
+    return s
+
+def create_tcp_header(source_port, dest_port, checksum):
+    """ Create a TCP header with the given source port, destination port, and checksum """
+    seq = 0
+    ack_seq = 0
+    doff = 5
+    syn_flag = 2
+    window = socket.htons(5840)
+    urg_ptr = 0
+    offset_res = (doff << 4) + 0
+    tcp_flags = syn_flag
+    tcp_header = struct.pack('!HHLLBBHHH', source_port, dest_port, seq, ack_seq, offset_res, tcp_flags, window, checksum, urg_ptr)
+    return tcp_header
+
+def get_source_ip(target_ip):
+    """ Get the source IP address of the machine """
+    try:
+        # Temporary socket to determine the source IP
+        temp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        temp_sock.connect((target_ip, 80))  # 80 is arbitrary, no data is sent
+        source_ip = temp_sock.getsockname()[0]
+        temp_sock.close()
+        return source_ip
+    except Exception as e:
+        print(f"Could not determine source IP: {e}")
+        return None
+#==========================================#
+# End of SYN Packet Construction Functions #
+#==========================================#
+
+#===================#
+# Syn Scan Function #
+#===================#
+
+def syn_scan(target_ip, target_port):
+    try:
+        source_ip = get_source_ip(target_ip)
+        if not source_ip:
+            print("Source IP could not be determined.")
+            return
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
+
+        s.settimeout(5)
+        source_port = 12345
+
+        placeholder_tcp_header = create_tcp_header(source_port, target_port, 0) # Checksum is 0 for now
+        pseudo_header = struct.pack('!4s4sBBH', socket.inet_aton(source_ip), socket.inet_aton(target_ip), 0, socket.IPPROTO_TCP, len(placeholder_tcp_header)) # 0 is the placeholder for checksum
+        psh = pseudo_header + placeholder_tcp_header
+        tcp_checksum = checksum(psh) 
+        tcp_header = create_tcp_header(source_port, target_port, tcp_checksum)
+        s.sendto(tcp_header, (target_ip, target_port))
+
+        ready = select.select([s], [], [], 5) # Wait for <x> seconds for a response (x=5)
+        if ready[0]:
+            data, addr = s.recvfrom(1024)
+            tcp_header_len = (data[32] >> 4) * 4
+            tcp_header = data[20:20+tcp_header_len]
+            if len(tcp_header) > 13:
+                flags = tcp_header[13]
+                if flags & 0x12:  # SYN-ACK
+                    print(f"Port {target_port} is open (SYN-ACK received).")
+                elif flags & 0x04:  # RST
+                    print(f"Port {target_port} is closed (RST received).")
+        else:
+            print(f"No response received for port {target_port}, it might be filtered or the scan timed out.")
+    except KeyboardInterrupt:
+        print("\nScan cancelled by user.")
+    except UnboundLocalError:
+        print("! This feature is currently only supported on Linux systems. !")
+    #except PermissionError:
+    #    print("Permission denied. Please run the script as a superuser.")
+    except Exception as e:
+        print(f"Error occurred: {e}")
+    finally:
+        try:
+            s.close()
+        except UnboundLocalError:
+            print("! This feature is currently only supported on Linux systems. !")
+            return 
+#==========================#   
+# End of Syn Scan Function #
+#==========================#
+
+             
+#===============================#
+# End of Stealth Scan Functions #
+#===============================#
 
 
 def random_port_order(port_list):
@@ -367,22 +477,31 @@ if __name__ == "__main__":
         if args.min_delay > 0 or args.max_delay > 0:
             # Perform the scan with delays
             open_ports = slow_scan(args.target, ports_to_scan, args.min_delay, args.max_delay)
+            
+        if args.stealth_scan:
+            # Perform a stealth scan using SYN packets
+            for port in ports_to_scan:
+                syn_scan(args.target, port)
         else:
             # Perform the regular scan without delays
             open_ports = scan_ports(args.target, ports_to_scan)
             
         # Reporting Findings in nice formatting.
-        num_open_ports = len(open_ports)
-        str_num_ports = f"Amount of open ports: {num_open_ports}"
-        print(beautify_string(str_num_ports, "-"))
+        try:
+            num_open_ports = len(open_ports)
+            str_num_ports = f"Amount of open ports: {num_open_ports}"
+            print(beautify_string(str_num_ports, "-"))
 
-        if num_open_ports != 0:
-            print("\nOpen Ports Discovered:")
-            print("----------------------")
-            for port in open_ports:
-                print(f"Port: {port}")
+            if num_open_ports != 0:
+                print("\nOpen Ports Discovered:")
+                print("----------------------")
+                for port in open_ports:
+                    print(f"Port: {port}")
+        except NameError:
+            pass
         
         print(beautify_string("End of Scan", "~"))
+        
     else:
         # CLI Application
         while True:
