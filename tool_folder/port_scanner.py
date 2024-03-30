@@ -201,6 +201,24 @@ def get_source_ip(target_ip):
 #===================#
 
 def syn_scan(target_ip, target_port):
+    """
+    Performs a TCP SYN scan on the specified port of the target IP.
+
+    This function crafts a TCP packet with the SYN flag set and sends it to the target port.
+    It listens for a SYN-ACK response, which indicates the port is open, or a RST (reset),
+    indicating the port is closed.
+
+    The SYN scan is a type of stealth scanning technique as it does not complete the TCP handshake,
+    making the scan less detectable by some firewalls and intrusion detection systems.
+
+    Parameters:
+    - target_ip (str): The IP address of the target system.
+    - target_port (int): The port number to scan.
+
+    Note: This function requires raw socket permissions, typically requiring administrative privileges.
+    """
+    # Craft the SYN packet using raw sockets, setting the SYN flag.
+    # Listen for responses to determine if the port is open or closed.
     try:
         source_ip = get_source_ip(target_ip)
         if not source_ip:
