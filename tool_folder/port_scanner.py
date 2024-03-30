@@ -35,6 +35,7 @@ from internal_library.asset_functions import beautify_string, beautify_title, cl
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Port Scanner")
+    parser.add_argument("--help", action="help", help="Show this help message and exit")
     parser.add_argument("-t", "--target", help="Target IP address to scan")
     parser.add_argument("-p", "--ports", help="Port range to scan, e.g., '20-80' or '80,443'")
     parser.add_argument("-r", "--random", action="store_true", help="Randomize the order of port scanning")
@@ -121,17 +122,53 @@ def slow_scan(target, port_range, min_delay=1, max_delay=0):
 #===================================#
 
 def checksum(data):
-    """ Calculate the checksum of the given data (in bytes) """
+    """
+    Calculates the TCP checksum for given data, ensuring data integrity over the network.
+
+    The checksum is a critical part of the TCP/IP protocols, used to detect data corruption during transmission.
+    This function implements the checksum calculation by dividing the data into 16-bit words,
+    summing them together, and performing a bit-wise NOT operation on the result.
+
+    Parameters:
+    - data (bytes): The header and data for which the checksum is to be calculated.
+
+    Returns:
+    - The calculated checksum as an integer.
+    """
+    # Ensure the data is even-numbered in length by padding with a null byte if necessary.
     if len(data) % 2 != 0:
         data += b'\0'
+        
+    # Sum the 16-bit words in the data
     s = sum(array := struct.unpack('!'+str(len(data)//2)+'H', data))
     s = (s >> 16) + (s & 0xffff)
     s += s >> 16
+    
+    # Add carry, if any, by shifting the right 16 bits and adding to the sum.
+    # Then, perform a bit wise NOT operation to get the checksum.
     s = ~s & 0xffff
     return s
 
 def create_tcp_header(source_port, dest_port, checksum):
-    """ Create a TCP header with the given source port, destination port, and checksum """
+    """
+    Manually constructs a TCP header with the specified parameters.
+
+    Parameters:
+    - source_port (int): The source port number.
+    - dest_port (int): The destination port number.
+    - checksum (int): The pre-calculated checksum for the header and data.
+
+    The TCP header includes fields like sequence numbers and flags. Here, we're particularly setting the SYN flag to initiate a connection.
+
+    The struct module is used to pack the header fields into a byte string, following the network byte order (!),
+    which is Big-Endian. This is crucial for ensuring that the packet is correctly interpreted by network devices.
+
+    Returns:
+    - A byte string representing the TCP header.
+    """
+    # TCP header are packed using the struct module to ensure correct byte order.
+    # This includes the source port, destination port, sequence number, acknowledgment number, and data offset,
+    # flags (with SYN flag set), window size, checksum, and urgent pointer.
     seq = 0
     ack_seq = 0
     doff = 5
@@ -485,7 +522,8 @@ if __name__ == "__main__":
         else:
             # Perform the regular scan without delays
             open_ports = scan_ports(args.target, ports_to_scan)
-            
+        if args.help:
+            print(help_section)   
         # Reporting Findings in nice formatting.
         try:
             num_open_ports = len(open_ports)
