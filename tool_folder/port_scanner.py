@@ -22,11 +22,163 @@ import struct
 import select
 import pathlib
 import sys
-# Append the parent directory of the current script to sys.path
-#current_dir = pathlib.Path(__file__).parent.absolute()  # Get the current directory of the script
-#parent_dir = current_dir.parent  # Navigate to the parent directory
-#sys.path.append(str(parent_dir))  # Append the parent directory to sys.path
-from internal_library.asset_functions import beautify_string, beautify_title, clear_screen, sanitize_target_input, sanitize_port_input, splash_logo_no_indent, center_block_text, center_text
+import os
+
+
+# Temporary fix for importing from internal_library by just adding the functions here.
+# from internal_library.asset_functions import beautify_string, beautify_title, clear_screen, sanitize_target_input, sanitize_port_input, splash_logo_no_indent, center_block_text, center_text
+
+def splash_logo_no_indent():
+    rapid_rabbit_logo ="""
+          
+                        (%%%%%%%%%%%%%%%%                               
+                  .%%%%%%%%%&.     .&%%%%%%%%%                          
+               &&&&%&           %  %%       &&&&&&                      
+            &&&&&       &&&&&&.        &(  ,    &&&&&                   
+          &&&&/           &&&&&&&&&    &&&&&&&    %&&&&                 
+        &&&&,   @@@@@.      @&&&&&@@@     &          &&&&               
+       @&&&&&&&   @@@@@@@@@@    @@@@@@@      @@@@&&&&&&&&@              
+      @@@@@&&&&&&&  @@@@@@@@@@@@@  @@@@@@         @&@  @@@@             
+     (######@@          @@@@@@@@@@@@  @@@@@@@        @@ @@@@            
+    @@@@.   @@         @         @@@@@@@@@@@@@@@@@       @@@@           
+    @@@@@@&&&&&%%%%%%%&&%%%%%@@      @@@@@@@/    @@@     @@@@           
+                                      @@@@@@@@@@@@@@@@   @@@@           
+    @@@@@@@@@@@@                    @@@@@@@@@@@@@@@@@#   @@@@           
+    @@@@@@@@      @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@     ,  @@@&           
+              %@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@      & @  @@@@            
+         @  @@@@@@@@,@@@@@@@@@@@@@@@@@@@@@@            @@@@             
+       **/////**//(@@@  @@@@@@@@@@@@@@@@@@            @@@@              
+                   ,@  /@@@@@@@@@@@@@@@@@      .(   @@@@@               
+          @@@@@@@@@@@@@@@@@@    @@@@@@@@   (@     @@@@@                 
+                            @@@@  @@@@         @@@@@@                   
+               @@@@@@@@@@@  @@@@           @@@@@@@                      
+                   @@@@@@@@@@     .@@@@@@@@@@@                          
+@@@@@@@@@@@@@@@
+          """
+    return rapid_rabbit_logo
+
+#=======================#
+# Center Text Functions #
+#=======================#
+
+def center_text(text, fill_char=" "):
+    # Get terminal width
+    terminal_width = os.get_terminal_size().columns
+    
+    # Split the text into lines in case it's multiline
+    lines = text.split("\n")
+    
+    # Center each line and join them back together
+    centered_lines = [line.center(terminal_width, fill_char) for line in lines]
+    
+    return "\n".join(centered_lines)
+
+def center_block_text(text, fill_char=" "):
+    # Get terminal width
+    terminal_width = os.get_terminal_size().columns
+    
+    # Split the text into lines in case it's multiline
+    lines = text.split("\n")
+    
+    # Center each line and join them back together
+    centered_lines = [line.center(terminal_width, fill_char) for line in lines]
+    
+    return "\n".join(centered_lines)
+
+# Clear the screen
+def clear_screen():
+    os.system("cls" if os.name == "nt" else "clear")
+
+#=============================#
+#   Beautify CLI Functions    #
+# Make menus look nice here:  #
+#=============================#
+
+def beautify_string(string, border):
+    """Beautifies A string with borders above and below.
+
+    Args:
+        string (_type_): A string that will be parsed.
+        x (_type_): Char you want to beatify the results.
+    """
+    string_length = len(string) * border
+    return f"\n{string_length}\n{string}\n{string_length}\n"
+
+def beautify_title(string, border_char, padding=0):
+    """ Beautifies a title with padding and borders. """
+    # Original string length
+    title_length = len(string)
+    
+    # Capitalize Title
+    string = string.upper()
+    
+    # Padding Start-End.
+    title_padding_start = border_char + (padding * " ")
+    title_padding_end = (padding * " ") + border_char
+    
+    # Title Length After Padding
+    title_length_after_padding = len(title_padding_start) + title_length + len(title_padding_end)
+    
+    # Title with padding
+    title_with_padding = f"{title_padding_start}{string}{title_padding_end}"
+    
+    # Adding Borders
+    border_char = title_length_after_padding * border_char
+    
+    # Beautified Title Result
+    beautified_title = f"{border_char}\n{title_with_padding}\n{border_char}"
+    
+    return beautified_title
+
+#===========================#
+# IP Sanitaization Function #
+#===========================#
+def sanitize_target_input(target_input):
+    # This function will sanitize target_input (IP Address) to correct any errors or spelling mistakes done by the user.
+    dirty_input = str(target_input)
+    stripped_ip = []
+    
+    # Split the IP by puncuation marks.
+    ip_octets = dirty_input.split(".")
+    
+    for octet in ip_octets:
+        # Remove spaces
+        cleaned_octets = octet.replace(" ", "")
+        stripped_ip.append(cleaned_octets)
+    
+    # Reassemble IP
+    cleaned_ip = ".".join(stripped_ip)
+    
+    # Check if valid IPv4 Address
+    if len(stripped_ip) != 4:
+        # If IP has more or less than four octets, then raise ValueError. | Should add graceful exit here. <!!)
+        raise ValueError(f"\"{cleaned_ip}\" is not a valid IPv4 address.")
+    else:    
+        return cleaned_ip
+    
+# Port Input Sanitization
+def sanitize_port_input(port_input):
+    # This function will sanitize the input if and correct spelling mistakes done by the user.
+    dirty_input = str(port_input)
+    cleaned_ports = []
+    
+    # Split the input by comma.
+    port_parts = dirty_input.split(",")
+    
+    for part in port_parts:
+        # Remove spaces and handle ranges.
+        cleaned_part = part.replace(" ", "")
+        if "-" in cleaned_part:
+            # Correcting the input format.
+            range_parts = cleaned_part.split("-")
+            cleaned_range = f"{range_parts[0].strip()}-{range_parts[1].strip()}"
+            cleaned_ports.append(cleaned_range)
+        else:
+            # Append individual ports
+            cleaned_ports.append(cleaned_part)
+    return ",".join(cleaned_ports)
+
+
 
 #=================#
 # Argument Parser #
@@ -35,7 +187,6 @@ from internal_library.asset_functions import beautify_string, beautify_title, cl
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Port Scanner")
-    parser.add_argument("--help", action="help", help="Show this help message and exit")
     parser.add_argument("-t", "--target", help="Target IP address to scan")
     parser.add_argument("-p", "--ports", help="Port range to scan, e.g., '20-80' or '80,443'")
     parser.add_argument("-r", "--random", action="store_true", help="Randomize the order of port scanning")
@@ -517,51 +668,48 @@ def main():
             print("Returning to main menu.")
             exit()
             
+def is_cli_args_provided():
+    """
+    Check if command-line arguments are provided.
+    """
+    return len(sys.argv) > 1
 
 if __name__ == "__main__":
-    args = parse_args()
-    if args.target and args.ports:
-        # Convert ports from string to list of integers
-        ports_to_scan = process_ports_arg(args.ports)
-        
-        # Randomize the port order if the -r flag is set
-        if args.random:
-            ports_to_scan = random_port_order(ports_to_scan)
-            
-        # Determine which scan function to use based on the delay arguments
-        if args.min_delay > 0 or args.max_delay > 0:
-            # Perform the scan with delays
-            open_ports = slow_scan(args.target, ports_to_scan, args.min_delay, args.max_delay)
-            
-        if args.stealth_scan:
-            # Perform a stealth scan using SYN packets
-            for port in ports_to_scan:
-                syn_scan(args.target, port)
-        else:
-            # Perform the regular scan without delays
-            open_ports = scan_ports(args.target, ports_to_scan)
-        if args.help:
-            print(help_section)   
-        # Reporting Findings in nice formatting.
-        try:
-            num_open_ports = len(open_ports)
-            str_num_ports = f"Amount of open ports: {num_open_ports}"
-            print(beautify_string(str_num_ports, "-"))
+    # If linux, then use argparse if not use the CLI application.
+    if os.name != 'nt' and is_cli_args_provided():  # 'nt' indicates it's running on Windows
+        args = parse_args()
+        if args.target and args.ports:
+            # Convert ports from string to list of integers
+            ports_to_scan = process_ports_arg(args.ports)
 
-            if num_open_ports != 0:
-                print("\nOpen Ports Discovered:")
-                print("----------------------")
-                for port in open_ports:
-                    print(f"Port: {port}")
-        except NameError:
-            pass
-        
-        print(beautify_string("End of Scan", "~"))
-        
+            # Randomize the port order if the -r flag is set
+            if args.random:
+                ports_to_scan = random_port_order(ports_to_scan)
+
+            # Determine which scan function to use based on the delay arguments
+            if args.min_delay > 0 or args.max_delay > 0:
+                # Perform the scan with delays
+                open_ports = slow_scan(args.target, ports_to_scan, args.min_delay, args.max_delay)
+
+            if args.stealth_scan:
+                # Perform a stealth scan using SYN packets
+                for port in ports_to_scan:
+                    syn_scan(args.target, port)
+            # Reporting Findings in nice formatting.
+            try:
+                num_open_ports = len(open_ports)
+                str_num_ports = f"Amount of open ports: {num_open_ports}"
+                print(beautify_string(str_num_ports, "-"))
+
+                if num_open_ports != 0:
+                    print("\nOpen Ports Discovered:")
+                    print("----------------------")
+                    for port in open_ports:
+                        print(f"Port: {port}")
+            except NameError:
+                pass
+            
+            print(beautify_string("End of Scan", "~")) 
     else:
-        # CLI Application
         while True:
-            clear_screen()
             main()
-        
-# End of script
