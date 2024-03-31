@@ -23,9 +23,9 @@ import select
 import pathlib
 import sys
 # Append the parent directory of the current script to sys.path
-current_dir = pathlib.Path(__file__).parent.absolute()  # Get the current directory of the script
-parent_dir = current_dir.parent  # Navigate to the parent directory
-sys.path.append(str(parent_dir))  # Append the parent directory to sys.path
+#current_dir = pathlib.Path(__file__).parent.absolute()  # Get the current directory of the script
+#parent_dir = current_dir.parent  # Navigate to the parent directory
+#sys.path.append(str(parent_dir))  # Append the parent directory to sys.path
 from internal_library.asset_functions import beautify_string, beautify_title, clear_screen, sanitize_target_input, sanitize_port_input, splash_logo_no_indent, center_block_text, center_text
 
 #=================#
