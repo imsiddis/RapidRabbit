@@ -381,12 +381,13 @@ def syn_scan(target_ip, target_port):
         s.settimeout(5)
         source_port = 12345
 
+        # Creating a placeholder TCP header with checksum 0
         placeholder_tcp_header = create_tcp_header(source_port, target_port, 0) # Checksum is 0 for now
         pseudo_header = struct.pack('!4s4sBBH', socket.inet_aton(source_ip), socket.inet_aton(target_ip), 0, socket.IPPROTO_TCP, len(placeholder_tcp_header)) # 0 is the placeholder for checksum
-        psh = pseudo_header + placeholder_tcp_header
+        psh = pseudo_header + placeholder_tcp_header # Pseudo header + TCP header
         tcp_checksum = checksum(psh) 
         tcp_header = create_tcp_header(source_port, target_port, tcp_checksum)
-        s.sendto(tcp_header, (target_ip, target_port))
+        s.sendto(tcp_header, (target_ip, target_port)) # Send the packet to the target port
 
         ready = select.select([s], [], [], 5) # Wait for <x> seconds for a response (x=5)
         if ready[0]:
