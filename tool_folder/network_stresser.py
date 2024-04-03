@@ -479,6 +479,10 @@ This tool will allow you to stress test a network by conducting various attacks 
         target_ip = attack_choice[1]
         target_port = attack_choice[2]
         syn_flood_attack(target_ip, 80)
+    
+    elif "exit" in attack_choice:
+        print("Exiting Network Stresser...")
+        exit()
     else:
         print("Invalid option. Please try again.")
         input("Press Enter to Continue...")
