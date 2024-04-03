@@ -20,8 +20,8 @@ import hashlib
 import threading
 import os
 from multiprocessing import Queue
-from internal_library.asset_functions import beautify, beautify_string, loading_bar, clear_screen, beautify_title, menu_option, center_text, center_block_text
 from internal_library.detect_wordlists import detect_wordlists
+from internal_library.asset_functions import beautify, clear_screen, beautify_title, menu_option
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -247,8 +247,7 @@ def select_wordlist(wordlists):
         return wordlists[choice - 1]['name']
     return None
 
-# Usage example with menu integration
-if __name__ == "__main__":
+def main():
     wordlists = detect_wordlists()
     wordlist_path = None # Initialize the wordlist path
     hash_to_crack = None # Initialize the hash to crack
@@ -281,4 +280,8 @@ if __name__ == "__main__":
             hash_cracker.crack_hash(hash_to_crack)
             input("Press ENTER to continue...")
         clear_screen()
+
+# Usage example with menu integration
+if __name__ == "__main__":
+    main()
         
