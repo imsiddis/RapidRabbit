@@ -141,6 +141,21 @@ def display_tools_by_category(tools, category):
         for tool in filtered_tools:
             print(f"Name: {tool['name']}, Version: {tool['version']}, Description: {tool['description']}")
 
+def execute_tool(tool_script_name):
+    """
+    Executes the tool script as a module using subprocess.
+    
+    Args:
+        tool_module_path (str): The importable path to the tool module.
+    """
+    tool_script_path = os.path.join(tool_script_name)
+    try:
+        # Run the module using the Python executable
+        subprocess.run([sys.executable, "-m", tool_script_path], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to execute the tool script: {e}")
+        
+
 def main():
     """
     This function is the entry point of the program. It allows the user to select a category and a tool,
@@ -226,10 +241,20 @@ def main():
         
         # Assuming the tool's name corresponds to a script filename in the tool_folder | WARNING: This is a security risk!
         tool_script_path = os.path.join("tool_folder", chosen_tool['filename'].replace(" ", "_"))
+        
+        
         print(f"Running {chosen_tool['name']} from {tool_script_path}...") # Note to self: Hide this from output?
         
+        # Construct the importable module path from the tool metadata
+        # For example, tool_module_path could be 'tool_folder.hash_cracker'
+        tool_module_name = f"tool_folder.{chosen_tool['filename'].replace('.py', '').replace(' ', '_')}"
+        tool_module_name = f"{tool_module_name}"
+        
+        # Execute the tool script as a module
+        execute_tool(tool_module_name)
+        
         # Execute the tool script
-        subprocess.run([sys.executable, tool_script_path], check=True)
+        #subprocess.run([sys.executable, tool_script_path], check=True)
         
     except (ValueError, IndexError):
         print("Invalid selection. Please enter a valid number.")
