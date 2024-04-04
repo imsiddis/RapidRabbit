@@ -27,7 +27,9 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 
 
-# Assume other necessary imports and function definitions remain as before
+#################################################################
+# Identify Funtion | Intended for automatic hash identification #
+#################################################################
 
 def identify_hash(hash):
     """
@@ -218,8 +220,9 @@ class HashCracker:
 def menu_options():
     select_wordlist = menu_option(1, "Select Wordlist")
     enter_hash = menu_option(2, "Enter Hash to Crack")
-    exit = menu_option(3, "Exit")
-    return f"{select_wordlist}{enter_hash}{exit}"
+    choose_file = menu_option(3, "Choose File with Hashes (Choose wordlist first)")
+    exit = menu_option(4, "Exit")
+    return f"{select_wordlist}{enter_hash}{choose_file}{exit}"
 
 def main_menu(chosen_wordlist=None, hash_to_crack=None):
     clear_screen()
@@ -247,6 +250,16 @@ def select_wordlist(wordlists):
         return wordlists[choice - 1]['name']
     return None
 
+def select_hashfile():
+    while True:
+        path = input("Enter the path to the hash file: ").strip()
+        if os.path.isfile(path):
+            return path
+        else:
+            print("Invalid path or the file does not exist. Please try again.")
+
+
+
 def main():
     wordlists = detect_wordlists()
     wordlist_path = None # Initialize the wordlist path
@@ -271,9 +284,33 @@ def main():
             else:
                 print("Please select a wordlist first.")
                 time.sleep(1)
-        elif choice == '3' or "exit" in choice.lower():
+        elif choice == '3': # Choose file with hashes
+            if wordlist_path:
+                hash_file_path = select_hashfile()
+                with open(hash_file_path, 'r') as file:
+                    for line in file:
+                        hash_to_crack = line.strip("\n")
+                        hash_cracker = HashCracker(wordlist_path)
+                        hash_cracker.crack_hash(hash_to_crack)
+                input("Press ENTER to continue...")
+                
+        elif choice == '4' or "exit" in choice.lower():
             print("Exiting the program...")
             break
+
+        
+        elif choice == "hf":
+            path = input("Enter the path to the hash file: ")
+            hash_file = select_hashfile(path)
+            if hash_file:
+                with open(hash_file, 'r') as file:
+                    for line in file:
+                        hash_to_crack = line.strip()
+                        hash_cracker = HashCracker(wordlist_path)
+                        hash_cracker.crack_hash(hash_to_crack)
+            input("Press ENTER to continue...")
+        
+        # Quick Crack command
         elif "hash:" in choice: # For testing purposes
             hash_to_crack = choice.split(":")[1].strip()
             hash_cracker = HashCracker(wordlist_path)
