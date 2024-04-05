@@ -59,7 +59,7 @@ def main():
     print("Hello World!")
 
 # -- Your Code Here -- #
-if__name__ == "__main__":
+if __name__ == "__main__":
     while True:
         main()
 ```
