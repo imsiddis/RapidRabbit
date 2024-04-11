@@ -26,6 +26,8 @@ import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 import time
 
+#Global Variables
+cracked_hashes = []
 
 #################################################################
 # Identify Funtion | Intended for automatic hash identification #
@@ -98,6 +100,14 @@ class HashCracker:
         self.found = False
         self.total_words = self.wordlist_length()
         self.processed_words = 0
+        #self.cracked_hashes = []
+        
+    def get_cracked_hashes(self):
+        return self.cracked_hashes
+    
+    def update_cracked_hashes(self, hash_to_crack, word):
+        with self.lock:
+            pass
 
     def wordlist_length(self):
         """
@@ -125,6 +135,7 @@ class HashCracker:
             progress = (self.processed_words / self.total_words) * 100
             print(f"\rProgress: {progress:.2f}%", end='')
 
+
     def crack_batch(self, words, hash_to_crack, hash_function):
         """
         Cracks a batch of words.
@@ -140,14 +151,17 @@ class HashCracker:
         for word in words:
             if self.found:
                 return
-            if hash_function(word) == hash_to_crack:
-                with self.lock:
-                    if not self.found:
+            
+            if hash_function(word) == hash_to_crack: # If the hash is cracked, update the flag and print the cracked hash
+                with self.lock: # Lock to ensure only one thread updates the flag
+                    if not self.found: # Double check to prevent multiple threads from updating the flag
+                        self.found = True
                         cracked_message = beautify(f"Cracked: {hash_to_crack} = {word}", "#", 2)
                         print(f"\n{cracked_message}")
-                        self.found = True
-                        return
+                        cracked_hashes.append(f"{hash_to_crack}:{word}")
+                        
         self.update_progress(len(words))
+
 
     def load_and_crack(self, hash_to_crack, hash_function):
         """
@@ -204,10 +218,17 @@ class HashCracker:
             'SHA512': lambda word: hashlib.sha512(word.encode()).hexdigest()
         }.get(hash_type, lambda word: None)
         
-        # Implementing SHA-1 Exception with Case Sensitivity
+        # Implementing case insensitive sanitization
         if hash_type == 'SHA1':
             print("SHA-1 hash detected.")
-            hash_to_crack = sanitize_hash_sha1(hash_to_crack)
+            hash_to_crack = sanitize_hash_lower(hash_to_crack)
+        elif hash_type == 'MD5':
+            print("MD5 hash detected.")
+            hash_to_crack = sanitize_hash_lower(hash_to_crack)
+            hash_to_crack = sanitize_hash(hash_to_crack)
+        elif hash_type == 'SHA256':
+            print("SHA-256 hash detected.")
+            hash_to_crack = sanitize_hash_lower(hash_to_crack)
         else:
             print(f"{hash_type} hash detected.")
             hash_to_crack = sanitize_hash(hash_to_crack)
@@ -283,15 +304,29 @@ def select_hashfile():
         else:
             print("Invalid path or the file does not exist. Please try again.")
 
+def sanitize_path(path):
+    # This will sanitize a path by removing any leading or trailing whitespace.
+    return path.strip()
+
+def sanitize_path_filename(path):
+    # This function will sanitize a path by returning the filename only.
+    
+    if "/" in path:
+        return path.split("/")[-1]
+    elif "\\" in path:
+        return path.split("\\")[-1]
+    else:
+        return path
+
 
 def sanitize_hash(hash):
     return hash.strip()
 
-# SHA-1 Exception with Case Sensitivity
-# Because of the nature of SHA-1, and how it interacts with hashlib, we need to make sure that the hash is in lowercase.
+# SHA-1, SHA256 and MD5 Exception with Case Sensitivity
+# Because of the nature of these hashes, and how they interact with hashlib, we need to make sure that the hash is in lowercase.
 # This is because hashlib will hash the string in lowercase, and if the hash is in uppercase, it will not match.
 # This is not the case with MD5 or NTLM, as they are not case sensitive.
-def sanitize_hash_sha1(hash):
+def sanitize_hash_lower(hash):
     """
     Exception for SHA-1 hash sanitization.
     
@@ -305,6 +340,8 @@ def main():
     wordlist_path = None # Initialize the wordlist path
     hash_to_crack = None # Initialize the hash to crack
     select_wordlist_name = None # Initialize the selected wordlist name
+    
+    # Initialize the list of cracked hashes
     
     try:
         while True: # Main menu loop
@@ -335,23 +372,57 @@ def main():
                             hash_to_crack = line.strip("\n")
                             hash_cracker = HashCracker(wordlist_path)
                             hash_cracker.crack_hash(hash_to_crack)
+                            
+                # Summary of cracked hashes
+                    print("\n\n\n")
+                    print(beautify_title("Cracked Hashes", "=", 2))
+                    
+                    if len(cracked_hashes) != 0:
+                        for i in cracked_hashes:
+                            print(i)     
+                    else:
+                        print("No hashes were cracked.")
+                    
                     input("Press ENTER to continue...")
                     
             elif choice == '4' or "exit" in choice.lower():
                 print("Exiting the program...")
                 break
-
             
-            elif choice == "hf":
-                path = input("Enter the path to the hash file: ")
-                hash_file = select_hashfile(path)
+            ##################################
+            # SHORTCUTS WITHIN CLI INTERFACE #
+            ##################################
+            # Quick Hash File Selection command
+            elif "hf:" in choice: # Shortcut to crack hashes from a file
+                cracked_hashes.clear() # Clear the list of cracked hashes
+                
+                #path = input("Enter the path to the hash file: ")
+                usr_path = choice.split("hf:")[1].strip() # Extract the path from the command
+                hash_file = sanitize_path(usr_path) # Sanitize the path
+                
                 if hash_file:
                     with open(hash_file, 'r') as file:
                         for line in file:
                             hash_to_crack = line.strip()
                             hash_cracker = HashCracker(wordlist_path)
                             hash_cracker.crack_hash(hash_to_crack)
-                input("Press ENTER to continue...")
+                    
+                    # Summary of cracked hashes
+                    print("\n\n\n")
+                    print(beautify_title("Cracked Hashes", "=", 2))
+                    
+                    if len(cracked_hashes) != 0:
+                        for i in cracked_hashes:
+                            print(i)     
+                    else:
+                        print("No hashes were cracked.")
+                        
+                            
+                else:
+                    print("Please select a wordlist first.")
+                    time.sleep(1)
+                
+                input("\nPress ENTER to continue...")
             
             # Quick Crack command
             elif "hash:" in choice: # Shortcut to crack a hash
@@ -363,25 +434,14 @@ def main():
                 else:
                     print("Please select a wordlist first.")
                     time.sleep(1)
+            
+            # Quick Wordlist Selection command
             elif "wl:" in choice:
                 wordlist_path = select_wordlist_shortcut(choice.split("wl:")[1].strip())
                 if wordlist_path:
-                    select_wordlist_path = choice.split("wl:")[1].strip()
-                    
-                    # We will now split based on the last slash to get the wordlist name. 
-                    # This is so that we can display the wordlist name in the main menu.
-                    if "/" in select_wordlist_path: # Check if the path contains forward slashes
-                        select_wordlist_name = select_wordlist_path.split("/")[-1] # Split the path based on the last forward slash.
-                    
-                    elif "\\" in select_wordlist_path: # Check if the path contains back slashes.    
-                        select_wordlist_name = select_wordlist_path.split("\\")[-1] # Split the path based on the last back slash.
-                    
-                    else:
-                        select_wordlist_name = select_wordlist_path
-                    
-                    
+                    select_wordlist_path = choice.split("wl:")[1].strip() # Update the selected wordlist path
+                    select_wordlist_name = sanitize_path_filename(select_wordlist_path) # Update the selected wordlist name
                     print(f"Selected wordlist: {select_wordlist_path}")
-                    
                     time.sleep(1)
                 else:
                     print("Please select a valid wordlist.")
