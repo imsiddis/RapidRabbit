@@ -187,7 +187,7 @@ class HashCracker:
         Returns:
             None
         """
-        start_time = time.time() # Start time for performance measurement
+        # |Moved below to attempt to fix timer bug| start_time = time.time() # Start time for performance measurement
         
         hash_type = identify_hash(hash_to_crack)
         if hash_type not in ['MD5', 'NTLM', 'SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512']:
@@ -203,6 +203,18 @@ class HashCracker:
             'SHA384': lambda word: hashlib.sha384(word.encode()).hexdigest(),
             'SHA512': lambda word: hashlib.sha512(word.encode()).hexdigest()
         }.get(hash_type, lambda word: None)
+        
+        # Implementing SHA-1 Exception with Case Sensitivity
+        if hash_type == 'SHA1':
+            print("SHA-1 hash detected.")
+            hash_to_crack = sanitize_hash_sha1(hash_to_crack)
+        else:
+            print(f"{hash_type} hash detected.")
+            hash_to_crack = sanitize_hash(hash_to_crack)
+        
+        # Implementing a timer for performance measurement
+        
+        start_time = time.time() # Start time for performance measurement
 
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor: # Use all available CPU cores
             futures = [executor.submit(self.crack_batch, batch, hash_to_crack, hash_function) for batch in self.load_and_crack(hash_to_crack, hash_function)]
@@ -217,12 +229,14 @@ class HashCracker:
         if not self.found:
             print("\nFailed to crack the hash.")
 
+
 def menu_options():
     select_wordlist = menu_option(1, "Select Wordlist")
     enter_hash = menu_option(2, "Enter Hash to Crack")
     choose_file = menu_option(3, "Choose File with Hashes (Choose wordlist first)")
     exit = menu_option(4, "Exit")
     return f"{select_wordlist}{enter_hash}{choose_file}{exit}"
+
 
 def main_menu(chosen_wordlist=None, hash_to_crack=None):
     clear_screen()
@@ -239,7 +253,8 @@ def main_menu(chosen_wordlist=None, hash_to_crack=None):
     choice = input(">> ").strip()
     return choice
 
-def select_wordlist(wordlists):
+
+def select_wordlist_cli(wordlists):
     clear_screen()
     print(beautify_title("Select Wordlist", "=", 2))
     for i, wordlist in enumerate(wordlists, start=1):
@@ -250,6 +265,16 @@ def select_wordlist(wordlists):
         return wordlists[choice - 1]['name']
     return None
 
+def select_wordlist_shortcut(path):
+    try:
+        if os.path.isfile(path):
+            return path
+        else:
+            print("Invalid path or the file does not exist. Please try again.")
+    except FileNotFoundError:
+        print("The wordlist file was not found.")
+        return None
+
 def select_hashfile():
     while True:
         path = input("Enter the path to the hash file: ").strip()
@@ -259,64 +284,114 @@ def select_hashfile():
             print("Invalid path or the file does not exist. Please try again.")
 
 
+def sanitize_hash(hash):
+    return hash.strip()
+
+# SHA-1 Exception with Case Sensitivity
+# Because of the nature of SHA-1, and how it interacts with hashlib, we need to make sure that the hash is in lowercase.
+# This is because hashlib will hash the string in lowercase, and if the hash is in uppercase, it will not match.
+# This is not the case with MD5 or NTLM, as they are not case sensitive.
+def sanitize_hash_sha1(hash):
+    """
+    Exception for SHA-1 hash sanitization.
+    
+    Sanitizes the SHA-1 hash by converting it to lowercase.
+    """
+    return hash.strip().lower()
+
 
 def main():
     wordlists = detect_wordlists()
     wordlist_path = None # Initialize the wordlist path
     hash_to_crack = None # Initialize the hash to crack
     select_wordlist_name = None # Initialize the selected wordlist name
+    
+    try:
+        while True: # Main menu loop
+            choice = main_menu(select_wordlist_name)
+            if choice == '1': # Select wordlist
+                selected_wordlist = select_wordlist_cli(wordlists) # Select a wordlist
+                if selected_wordlist:
+                    wordlist_path = os.path.join("wordlists", selected_wordlist)
+                    select_wordlist_name = selected_wordlist # Update the selected wordlist name
+                    print(f"Selected wordlist: {selected_wordlist}")
+                    time.sleep(1)
+                    
+            elif choice == '2': # Enter hash to crack
+                if wordlist_path:
+                    hash_to_crack = input("Enter the hash to crack: ").strip()
+                    hash_cracker = HashCracker(wordlist_path)
+                    hash_cracker.crack_hash(hash_to_crack)
+                    input("Press ENTER to continue...")
+                else:
+                    print("Please select a wordlist first.")
+                    time.sleep(1)
+                    
+            elif choice == '3': # Choose file with hashes
+                if wordlist_path:
+                    hash_file_path = select_hashfile()
+                    with open(hash_file_path, 'r') as file:
+                        for line in file:
+                            hash_to_crack = line.strip("\n")
+                            hash_cracker = HashCracker(wordlist_path)
+                            hash_cracker.crack_hash(hash_to_crack)
+                    input("Press ENTER to continue...")
+                    
+            elif choice == '4' or "exit" in choice.lower():
+                print("Exiting the program...")
+                break
 
-    while True: # Main menu loop
-        choice = main_menu(select_wordlist_name)
-        if choice == '1': # Select wordlist
-            selected_wordlist = select_wordlist(wordlists) # Select a wordlist
-            if selected_wordlist:
-                wordlist_path = os.path.join("wordlists", selected_wordlist)
-                select_wordlist_name = selected_wordlist # Update the selected wordlist name
-                print(f"Selected wordlist: {selected_wordlist}")
-                time.sleep(1)
-        elif choice == '2': # Enter hash to crack
-            if wordlist_path:
-                hash_to_crack = input("Enter the hash to crack: ").strip()
-                hash_cracker = HashCracker(wordlist_path)
-                hash_cracker.crack_hash(hash_to_crack)
+            
+            elif choice == "hf":
+                path = input("Enter the path to the hash file: ")
+                hash_file = select_hashfile(path)
+                if hash_file:
+                    with open(hash_file, 'r') as file:
+                        for line in file:
+                            hash_to_crack = line.strip()
+                            hash_cracker = HashCracker(wordlist_path)
+                            hash_cracker.crack_hash(hash_to_crack)
                 input("Press ENTER to continue...")
-            else:
-                print("Please select a wordlist first.")
-                time.sleep(1)
-        elif choice == '3': # Choose file with hashes
-            if wordlist_path:
-                hash_file_path = select_hashfile()
-                with open(hash_file_path, 'r') as file:
-                    for line in file:
-                        hash_to_crack = line.strip("\n")
-                        hash_cracker = HashCracker(wordlist_path)
-                        hash_cracker.crack_hash(hash_to_crack)
-                input("Press ENTER to continue...")
-                
-        elif choice == '4' or "exit" in choice.lower():
-            print("Exiting the program...")
-            break
-
-        
-        elif choice == "hf":
-            path = input("Enter the path to the hash file: ")
-            hash_file = select_hashfile(path)
-            if hash_file:
-                with open(hash_file, 'r') as file:
-                    for line in file:
-                        hash_to_crack = line.strip()
-                        hash_cracker = HashCracker(wordlist_path)
-                        hash_cracker.crack_hash(hash_to_crack)
-            input("Press ENTER to continue...")
-        
-        # Quick Crack command
-        elif "hash:" in choice: # For testing purposes
-            hash_to_crack = choice.split(":")[1].strip()
-            hash_cracker = HashCracker(wordlist_path)
-            hash_cracker.crack_hash(hash_to_crack)
-            input("Press ENTER to continue...")
-        clear_screen()
+            
+            # Quick Crack command
+            elif "hash:" in choice: # Shortcut to crack a hash
+                if wordlist_path: # Check if a wordlist has been selected
+                    hash_to_crack = choice.split(":")[1].strip()
+                    hash_cracker = HashCracker(wordlist_path)
+                    hash_cracker.crack_hash(hash_to_crack)
+                    input("Press ENTER to continue...")
+                else:
+                    print("Please select a wordlist first.")
+                    time.sleep(1)
+            elif "wl:" in choice:
+                wordlist_path = select_wordlist_shortcut(choice.split("wl:")[1].strip())
+                if wordlist_path:
+                    select_wordlist_path = choice.split("wl:")[1].strip()
+                    
+                    # We will now split based on the last slash to get the wordlist name. 
+                    # This is so that we can display the wordlist name in the main menu.
+                    if "/" in select_wordlist_path: # Check if the path contains forward slashes
+                        select_wordlist_name = select_wordlist_path.split("/")[-1] # Split the path based on the last forward slash.
+                    
+                    elif "\\" in select_wordlist_path: # Check if the path contains back slashes.    
+                        select_wordlist_name = select_wordlist_path.split("\\")[-1] # Split the path based on the last back slash.
+                    
+                    else:
+                        select_wordlist_name = select_wordlist_path
+                    
+                    
+                    print(f"Selected wordlist: {select_wordlist_path}")
+                    
+                    time.sleep(1)
+                else:
+                    print("Please select a valid wordlist.")
+                    time.sleep(1)
+            clear_screen()
+            
+    except KeyboardInterrupt:
+        print("\nExiting the program...")
+        time.sleep(1)
+        return
 
 # Usage example with menu integration
 if __name__ == "__main__":
