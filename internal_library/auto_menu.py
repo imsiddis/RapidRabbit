@@ -173,7 +173,8 @@ def main():
     else:
         pass
     
-    hint = beautify_string("# Hint: Type 'exit' to exit the program, 'cls' to clear the screen, or 'help' to display this message. #", "#")
+    
+    hint = beautify_string("Shortcuts:\n - Type 'exit' to exit the program. \n - 'update' to update the tools within the toolkit.\n - 'help' for more.", "#")
     print(center_text(hint))
     print("Select a category:") 
     
@@ -197,8 +198,7 @@ def main():
             print("""
                   Shortcut commands:
                     exit - Exit the program
-                    cls - Clear the screen
-                    help - Display this message
+                    list - List all tools in all categories
                     update - Update the tool/category list
                     help - Display this message
                     
