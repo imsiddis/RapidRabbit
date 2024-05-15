@@ -36,6 +36,16 @@ Upon starting the toolkit, it will automatically detect and list available tools
 * **Cross-Platform:** The toolkit is designed to run on any platform that supports Python.
 
 ### Adding Your Own Scripts
+
+#### Script Import Wizard
+As of the 15th of May, 2024 an interactive import script has been added to the framework. Instead of having to manually adding your own scripts with the risk of simple syntax mistakes, **"import.py"** will ensure that all the necessary fields has been added.
+
+#### **Import Wizard Overview:**
+* It will prompt the user for the necessary input requirements.
+* It will then copy the python file to the tool folder, and then add the necessary meta data to the script by adding it after any imports that may be in the file and before the the first function in the script. This ensures that the integrity of the original file remains, instead of editing the original in case of an unforseen bug or user error. 
+
+#### Manual Script Integration
+
 To extend the functionality of The Rapid Rabbit Toolkit with your own scripts, follow these guidelines:
 
 * **Prepare Your Script:** Ensure your script is written in Python and contains a tool_details dictionary at the top of the file with the following format:
