@@ -28,6 +28,14 @@
         "description": "This tool will identify a given hash."
     },
     {
+        "name": "Import Wizard",
+        "filename": "import.py",
+        "category": "Miscellaneous",
+        "version": "1.0",
+        "description": "This script helps you import new tools to the toolkit.",
+        "location": "tool_folder\\import.py"
+    },
+    {
         "name": "Stress Tester",
         "filename": "network_stresser.py",
         "Category": "Network",
