@@ -8,6 +8,14 @@ import datetime
 import platform
 import socket
 
+class Color:
+    BIBlue   = "\033[1;94m"
+    BIRed    = "\033[1;91m"
+    Red      = "\033[0;31m"
+    Green    = "\033[0;32m"
+    Bold     = "\033[1m"
+    NC       = "\033[0m"   # No Color
+
 # Clear the screen
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
